@@ -1,29 +1,55 @@
 package com.mygdx.game.objects;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.utils.Array;
 import com.mygdx.game.B2DVars;
 
 public class Player {
     public Body body;
-    private float speed = 5f;
-
-    private Animation<TextureRegion> walkAnim;
-    private Animation<TextureRegion> idleAnim;
-    private Animation<TextureRegion> attackAnim;
-
+    private Animation<TextureRegion> idleAnim, walkAnim, attackAnim;
     private float stateTime = 0;
-    private float rotation = 0;
-    public boolean isAttacking = false;
-    private float attackTimer = 0;
+
+    private boolean isAttacking = false;
+    private Vector2 mousePos;
+    private Vector2 lookDirection;
 
     public Player(World world, float x, float y) {
-        // Физика остается без изменений
+        this.mousePos = new Vector2();
+        this.lookDirection = new Vector2(1, 0);
+
+        loadAnimations();
+        createPhysics(world, x, y);
+    }
+
+    private void loadAnimations() {
+        // Загрузка IDLE (2 кадра по твоей структуре)
+        Array<TextureRegion> idleFrames = new Array<>();
+        for (int i = 1; i <= 2; i++) {
+            idleFrames.add(new TextureRegion(new Texture("player/idle/idle" + i + ".png")));
+        }
+        idleAnim = new Animation<>(0.3f, idleFrames, Animation.PlayMode.LOOP);
+
+        // Загрузка WALK (6 кадров по твоей структуре)
+        Array<TextureRegion> walkFrames = new Array<>();
+        for (int i = 1; i <= 6; i++) {
+            walkFrames.add(new TextureRegion(new Texture("player/walk/walk" + i + ".png")));
+        }
+        walkAnim = new Animation<>(0.1f, walkFrames, Animation.PlayMode.LOOP);
+
+        // Загрузка ATTACK (5 кадров)
+        Array<TextureRegion> attackFrames = new Array<>();
+        for (int i = 1; i <= 5; i++) {
+            attackFrames.add(new TextureRegion(new Texture("player/attack/attack" + i + ".png")));
+        }
+        attackAnim = new Animation<>(0.07f, attackFrames, Animation.PlayMode.NORMAL);
+    }
+
+    private void createPhysics(World world, float x, float y) {
         BodyDef bdef = new BodyDef();
         bdef.type = BodyDef.BodyType.DynamicBody;
         bdef.position.set(x / B2DVars.PPM, y / B2DVars.PPM);
@@ -31,97 +57,71 @@ public class Player {
         body = world.createBody(bdef);
 
         CircleShape shape = new CircleShape();
-        shape.setRadius(15 / B2DVars.PPM);
+        shape.setRadius(12 / B2DVars.PPM);
+
         FixtureDef fdef = new FixtureDef();
         fdef.shape = shape;
+        fdef.friction = 0.5f;
         fdef.filter.categoryBits = B2DVars.BIT_PLAYER;
+
         body.createFixture(fdef).setUserData("player");
         shape.dispose();
-
-        // Загружаем ВСЕ кадры
-        loadAnimations();
     }
 
-    private void loadAnimations() {
-        // Idle: 2 кадра (character/idle/idle1.png, idle2.png)
-        TextureRegion[] idleFrames = new TextureRegion[2];
-        for (int i = 0; i < 2; i++) {
-            idleFrames[i] = new TextureRegion(new Texture("character/idle/idle" + (i + 1) + ".png"));
-        }
-        idleAnim = new Animation<>(0.4f, idleFrames); // Медленное дыхание
-
-        // Walk: 6 кадров (walk1.png до walk6.png)
-        TextureRegion[] walkFrames = new TextureRegion[6];
-        for (int i = 0; i < 6; i++) {
-            walkFrames[i] = new TextureRegion(new Texture("character/walk/walk" + (i + 1) + ".png"));
-        }
-        // 0.1f - стандарт для бодрой походки
-        walkAnim = new Animation<>(0.1f, walkFrames);
-
-        // Attack: 5 кадров (attack1.png до attack5.png)
-        TextureRegion[] atkFrames = new TextureRegion[5];
-        for (int i = 0; i < 5; i++) {
-            atkFrames[i] = new TextureRegion(new Texture("character/attack/attack" + (i + 1) + ".png"));
-        }
-        // Делаем атаку очень быстрой и резкой
-        attackAnim = new Animation<>(0.04f, atkFrames);
+    public void handleInput(Vector2 move) {
+        float speed = 4.5f;
+        body.setLinearVelocity(move.scl(speed));
     }
 
-    public void update(float dt, Vector2 mousePos) {
+    public void update(float dt, Vector2 currentMousePos) {
         stateTime += dt;
+        this.mousePos.set(currentMousePos);
 
-        float relX = mousePos.x - (body.getPosition().x * B2DVars.PPM);
-        float relY = mousePos.y - (body.getPosition().y * B2DVars.PPM);
-        rotation = (float) Math.toDegrees(Math.atan2(relY, relX));
+        // Направление взгляда для хитбокса атаки
+        lookDirection.set(mousePos).sub(body.getPosition().scl(B2DVars.PPM)).nor();
 
-        if (isAttacking) {
-            attackTimer -= dt;
-            if (attackTimer <= 0) {
-                isAttacking = false;
-            }
-        }
-    }
-
-    public void handleInput(Vector2 moveDir) {
-        // Если атакуем — персонаж замирает для удара (можно убрать, если хочешь бить на бегу)
-        if (!isAttacking) {
-            body.setLinearVelocity(moveDir.scl(speed));
-        } else {
-            body.setLinearVelocity(0, 0);
+        if (isAttacking && attackAnim.isAnimationFinished(stateTime)) {
+            isAttacking = false;
         }
     }
 
     public void attack() {
-        if (isAttacking) return;
-        isAttacking = true;
-        stateTime = 0; // Начинаем анимацию удара с первого кадра
-        attackTimer = attackAnim.getAnimationDuration();
+        if (!isAttacking) {
+            isAttacking = true;
+            stateTime = 0;
+        }
     }
 
     public void draw(SpriteBatch batch) {
-        TextureRegion frame;
+        TextureRegion currentFrame;
 
-        // Выбираем правильный кадр на основе состояния
         if (isAttacking) {
-            frame = attackAnim.getKeyFrame(stateTime, false);
+            currentFrame = attackAnim.getKeyFrame(stateTime);
         } else if (body.getLinearVelocity().len() > 0.1f) {
-            frame = walkAnim.getKeyFrame(stateTime, true);
+            currentFrame = walkAnim.getKeyFrame(stateTime);
         } else {
-            frame = idleAnim.getKeyFrame(stateTime, true);
+            currentFrame = idleAnim.getKeyFrame(stateTime);
         }
 
-        // Логика разворота (Flip)
-        boolean flip = (rotation > 90 || rotation < -90);
+        // --- ИСПРАВЛЕНИЕ РАЗМЕРА ---
+        // Укажи здесь нужный размер в пикселях (например, 64x64)
+        float drawWidth = 64f;
+        float drawHeight = 64f;
 
-        // Рисуем с учетом флипа через scaleX
-        batch.draw(
-                frame,
-                (body.getPosition().x * B2DVars.PPM) - 32,
-                (body.getPosition().y * B2DVars.PPM) - 32,
-                32, 32,
-                64, 64,
-                flip ? -1 : 1, 1,
-                0 // Угол 0, так как мы используем флип
-        );
+        // Центрируем спрайт относительно узкого физического тела
+        float x = (body.getPosition().x * B2DVars.PPM) - drawWidth / 2;
+        float y = (body.getPosition().y * B2DVars.PPM) - drawHeight / 2;
+
+        boolean flip = lookDirection.x < 0;
+
+        // Рисуем с фиксированным размером drawWidth/drawHeight
+        if (flip) {
+            batch.draw(currentFrame, x + drawWidth, y, -drawWidth, drawHeight);
+        } else {
+            batch.draw(currentFrame, x, y, drawWidth, drawHeight);
+        }
+    }
+    public Vector2 getLookDirection() {
+        return lookDirection;
     }
 }
