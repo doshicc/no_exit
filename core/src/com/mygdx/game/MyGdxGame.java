@@ -5,27 +5,35 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.mygdx.game.screens.PlayScreen;
 
 public class MyGdxGame extends Game {
-    // SpriteBatch лучше держать здесь один на всю игру, чтобы не плодить мусор в памяти
     public SpriteBatch batch;
 
     @Override
     public void create() {
         batch = new SpriteBatch();
 
-        // Устанавливаем экран загрузки или сразу игровой экран
-        // Теперь при запуске LibGDX создаст твой PlayScreen
+        // 1. Сначала подготавливаем ассеты
+        Assets.load();
+
+        // 2. Ждем, пока всё загрузится в память.
+        // В будущем лучше сделать Screen загрузки, но для теста finishLoading — самое то.
+        Assets.manager.finishLoading();
+
+        // 3. Раскладываем загруженные текстуры по переменным (floorDefault и т.д.)
+        Assets.setup();
+
+        // 4. И только теперь, когда текстуры готовы, запускаем экран игры
         this.setScreen(new PlayScreen(this));
     }
 
     @Override
     public void render() {
-        // Обязательно вызываем super.render(), иначе отрисовка в PlayScreen не заработает
         super.render();
     }
 
     @Override
     public void dispose() {
-        // Чистим память при закрытии
         batch.dispose();
+        // 5. Не забывай чистить AssetManager при выходе из игры
+        Assets.dispose();
     }
 }

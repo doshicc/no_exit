@@ -10,21 +10,27 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
+import com.mygdx.game.Assets;
 import com.mygdx.game.B2DVars;
 import com.mygdx.game.MyGdxGame;
+import com.mygdx.game.managers.BodyFactory; // Добавили фабрику
 import com.mygdx.game.managers.LevelManager;
+import com.mygdx.game.renderers.LevelRenderer; // Добавили рендерер
 import com.mygdx.game.objects.Player;
 import com.mygdx.game.objects.EnemyZombie;
-import com.mygdx.game.objects.RoomData;
+import com.mygdx.game.data.RoomData;
 
 public class PlayScreen implements Screen {
     private final SpriteBatch batch;
     private World world;
     private OrthographicCamera cam;
     private Player player;
-    private LevelManager levelManager;
-    private Array<EnemyZombie> zombies;
 
+    private LevelManager levelManager;
+    private LevelRenderer levelRenderer;
+    private BodyFactory bodyFactory;
+
+    private Array<EnemyZombie> zombies;
     private RoomData currentRoom, nextRoom;
     private float roomW = 1280f, roomH = 720f, corridorGap = 350f, tileSize = 64f;
     private boolean roomCleared = false;
@@ -35,23 +41,23 @@ public class PlayScreen implements Screen {
 
     @Override
     public void show() {
+        // 1. Инициализация мира и камеры
         world = new World(new Vector2(0, 0), true);
         cam = new OrthographicCamera();
         cam.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
+        // 2. Инициализация новых менеджеров
+        bodyFactory = new BodyFactory(world);
         levelManager = new LevelManager(world);
+        levelRenderer = new LevelRenderer();
+
         zombies = new Array<>();
 
+        // 3. Создание первой комнаты
         currentRoom = levelManager.createRoom(0, 0, roomW, roomH, true);
         player = new Player(world, 200, roomH / 2);
 
         spawnZombies(currentRoom);
-    }
-
-    private void spawnZombies(RoomData room) {
-        zombies.add(new EnemyZombie(world, room.position.x + 700, room.position.y + 300));
-        zombies.add(new EnemyZombie(world, room.position.x + 1000, room.position.y + 500));
-        zombies.add(new EnemyZombie(world, room.position.x + 850, room.position.y + 150));
     }
 
     @Override
@@ -64,24 +70,19 @@ public class PlayScreen implements Screen {
         batch.setProjectionMatrix(cam.combined);
         batch.begin();
 
-        levelManager.drawRoom(batch, currentRoom, currentRoom.position.x == 0);
+        // Рисуем комнаты через новый рендерер
+        levelRenderer.render(batch, currentRoom);
 
         if (nextRoom != null) {
-            // Коридор (визуал)
-            for (float x = currentRoom.position.x + roomW; x < nextRoom.position.x; x += tileSize) {
-                float centerY = roomH / 2f;
-                batch.draw(levelManager.floorDefault, x, centerY, tileSize, tileSize);
-                batch.draw(levelManager.floorDefault, x, centerY + tileSize, tileSize, tileSize);
-                batch.draw(levelManager.floorDefault, x, centerY - tileSize, tileSize, tileSize);
-                batch.draw(levelManager.upWall, x, centerY + tileSize * 2, tileSize, tileSize);
-                batch.draw(levelManager.downWall, x, centerY - tileSize * 2, tileSize, tileSize);
-            }
-            levelManager.drawRoom(batch, nextRoom, false);
+            // Рисуем коридор (теперь можно добавить метод в LevelRenderer, но пока оставим логику тут, почистив её)
+            drawCorridor();
+            levelRenderer.render(batch, nextRoom);
         }
 
+        // Заглушка двери, если комната не зачищена
         if (!roomCleared) {
             batch.setColor(0, 0, 0, 0.8f);
-            batch.draw(levelManager.leftRightWall, currentRoom.position.x + roomW - tileSize, roomH/2 - tileSize, tileSize, tileSize*3);
+            batch.draw(Assets.leftRightWall, currentRoom.position.x + roomW - tileSize, roomH/2 - tileSize, tileSize, tileSize*3);
             batch.setColor(1, 1, 1, 1f);
         }
 
@@ -91,9 +92,24 @@ public class PlayScreen implements Screen {
         batch.end();
     }
 
+    private void drawCorridor() {
+        float startX = currentRoom.position.x + roomW;
+        float endX = nextRoom.position.x;
+        float centerY = roomH / 2f;
+
+        for (float x = startX; x < endX; x += tileSize) {
+            batch.draw(Assets.floorDefault, x, centerY, tileSize, tileSize);
+            batch.draw(Assets.floorDefault, x, centerY + tileSize, tileSize, tileSize);
+            batch.draw(Assets.floorDefault, x, centerY - tileSize, tileSize, tileSize);
+            batch.draw(Assets.upWall, x, centerY + tileSize * 2, tileSize, tileSize);
+            batch.draw(Assets.downWall, x, centerY - tileSize * 2, tileSize, tileSize);
+        }
+    }
+
     private void update(float dt) {
         world.step(1/60f, 6, 2);
 
+        // Проверка зачистки
         if (!roomCleared) {
             boolean anyAlive = false;
             for (EnemyZombie z : zombies) {
@@ -102,6 +118,7 @@ public class PlayScreen implements Screen {
             if (!anyAlive) roomCleared = true;
         }
 
+        // Генерация следующей комнаты
         if (roomCleared && nextRoom == null) {
             float nx = currentRoom.position.x + roomW + corridorGap;
             nextRoom = levelManager.createRoom(nx, 0, roomW, roomH, false);
@@ -109,10 +126,13 @@ public class PlayScreen implements Screen {
             createCorridorPhysics();
         }
 
+        // Переход в новую комнату
         if (nextRoom != null) {
             float playerX = player.body.getPosition().x * B2DVars.PPM;
             if (playerX > nextRoom.position.x + 128) {
-                levelManager.createStaticRect(nextRoom.position.x + tileSize/2, roomH/2, tileSize/2, tileSize, "wall_side");
+                // Используем фабрику вместо прямого вызова создания тел
+                bodyFactory.createRect(nextRoom.position.x + tileSize/2, roomH/2, tileSize, tileSize*2, true, 0, 0, "wall_side");
+
                 cleanupZombies();
                 currentRoom.destroy(world);
                 currentRoom = nextRoom;
@@ -124,6 +144,7 @@ public class PlayScreen implements Screen {
         handleInput(dt);
         for (EnemyZombie z : zombies) z.update(dt, player.body.getPosition());
 
+        // Камера
         float camX = Math.max(player.body.getPosition().x * B2DVars.PPM, Gdx.graphics.getWidth() / 2f);
         cam.position.lerp(new Vector3(camX, roomH / 2, 0), 0.1f);
         cam.update();
@@ -134,8 +155,16 @@ public class PlayScreen implements Screen {
         float endX = nextRoom.position.x;
         float yBottom = roomH / 2 - tileSize;
         float yTop = roomH / 2 + tileSize + tileSize;
-        currentRoom.bodies.add(levelManager.createStaticRect(startX + (endX - startX)/2, yBottom - 5, (endX-startX)/2, 5, "wall_low"));
-        currentRoom.bodies.add(levelManager.createStaticRect(startX + (endX - startX)/2, yTop + 5, (endX-startX)/2, 5, "wall_up"));
+
+        // Используем фабрику!
+        currentRoom.bodies.add(bodyFactory.createRect(startX + (endX - startX)/2, yBottom - 5, (endX-startX), 10, true, 0, 0, "wall_low"));
+        currentRoom.bodies.add(bodyFactory.createRect(startX + (endX - startX)/2, yTop + 5, (endX-startX), 10, true, 0, 0, "wall_up"));
+    }
+
+    private void spawnZombies(RoomData room) {
+        zombies.add(new EnemyZombie(world, room.position.x + 700, room.position.y + 300));
+        zombies.add(new EnemyZombie(world, room.position.x + 1000, room.position.y + 500));
+        zombies.add(new EnemyZombie(world, room.position.x + 850, room.position.y + 150));
     }
 
     private void handleInput(float dt) {
@@ -160,7 +189,7 @@ public class PlayScreen implements Screen {
         for (EnemyZombie z : zombies) {
             if (z.isDead) continue;
             Vector2 toZ = z.body.getPosition().cpy().sub(player.body.getPosition());
-            if (toZ.len() < 2.8f) {
+            if (toZ.len() < 2.8f) { // Дистанция атаки в метрах Box2D
                 float angle = Math.abs(player.getLookDirection().angleDeg(toZ));
                 if (angle < 70f) {
                     z.takeDamage(1);
@@ -181,7 +210,10 @@ public class PlayScreen implements Screen {
     }
 
     @Override public void resize(int width, int height) { cam.setToOrtho(false, width, height); }
-    @Override public void dispose() { world.dispose(); levelManager.dispose(); }
+    @Override public void dispose() {
+        world.dispose();
+        // Assets.dispose() вызывать тут не надо, если он общий для всей игры
+    }
     @Override public void pause() {}
     @Override public void resume() {}
     @Override public void hide() {}

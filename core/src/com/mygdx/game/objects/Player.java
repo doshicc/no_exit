@@ -1,52 +1,22 @@
 package com.mygdx.game.objects;
 
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
-import com.badlogic.gdx.utils.Array;
+import com.mygdx.game.Assets;
 import com.mygdx.game.B2DVars;
+import com.mygdx.game.enums.EntityState;
 
 public class Player {
     public Body body;
-    private Animation<TextureRegion> idleAnim, walkAnim, attackAnim;
     private float stateTime = 0;
-
-    private boolean isAttacking = false;
-    private Vector2 mousePos;
-    private Vector2 lookDirection;
+    private EntityState currentState = EntityState.IDLE;
+    private Vector2 lookDirection = new Vector2(1, 0);
 
     public Player(World world, float x, float y) {
-        this.mousePos = new Vector2();
-        this.lookDirection = new Vector2(1, 0);
-
-        loadAnimations();
         createPhysics(world, x, y);
-    }
-
-    private void loadAnimations() {
-        // Загрузка IDLE (2 кадра по твоей структуре)
-        Array<TextureRegion> idleFrames = new Array<>();
-        for (int i = 1; i <= 2; i++) {
-            idleFrames.add(new TextureRegion(new Texture("player/idle/idle" + i + ".png")));
-        }
-        idleAnim = new Animation<>(0.3f, idleFrames, Animation.PlayMode.LOOP);
-
-        // Загрузка WALK (6 кадров по твоей структуре)
-        Array<TextureRegion> walkFrames = new Array<>();
-        for (int i = 1; i <= 6; i++) {
-            walkFrames.add(new TextureRegion(new Texture("player/walk/walk" + i + ".png")));
-        }
-        walkAnim = new Animation<>(0.1f, walkFrames, Animation.PlayMode.LOOP);
-
-        // Загрузка ATTACK (5 кадров)
-        Array<TextureRegion> attackFrames = new Array<>();
-        for (int i = 1; i <= 5; i++) {
-            attackFrames.add(new TextureRegion(new Texture("player/attack/attack" + i + ".png")));
-        }
-        attackAnim = new Animation<>(0.07f, attackFrames, Animation.PlayMode.NORMAL);
     }
 
     private void createPhysics(World world, float x, float y) {
@@ -54,6 +24,7 @@ public class Player {
         bdef.type = BodyDef.BodyType.DynamicBody;
         bdef.position.set(x / B2DVars.PPM, y / B2DVars.PPM);
         bdef.fixedRotation = true;
+        bdef.linearDamping = 1.0f;
         body = world.createBody(bdef);
 
         CircleShape shape = new CircleShape();
@@ -69,59 +40,72 @@ public class Player {
     }
 
     public void handleInput(Vector2 move) {
-        float speed = 4.5f;
-        body.setLinearVelocity(move.scl(speed));
+        float baseSpeed = 4.5f;
+
+        // --- ПРАВКА ТУТ ---
+        // Если атакуем — режем скорость пополам
+        float speedModifier = (currentState == EntityState.ATTACK) ? 0.5f : 1.0f;
+
+        body.setLinearVelocity(move.scl(baseSpeed * speedModifier));
     }
 
-    public void update(float dt, Vector2 currentMousePos) {
+    public void update(float dt, Vector2 mousePos) {
         stateTime += dt;
-        this.mousePos.set(currentMousePos);
 
-        // Направление взгляда для хитбокса атаки
-        lookDirection.set(mousePos).sub(body.getPosition().scl(B2DVars.PPM)).nor();
+        Vector2 playerPosPx = body.getPosition().cpy().scl(B2DVars.PPM);
+        lookDirection.set(mousePos).sub(playerPosPx).nor();
 
-        if (isAttacking && attackAnim.isAnimationFinished(stateTime)) {
-            isAttacking = false;
+        // Логика состояний
+        if (currentState == EntityState.ATTACK) {
+            if (Assets.playerAttack.isAnimationFinished(stateTime)) {
+                setState(EntityState.IDLE);
+            }
+        } else {
+            // Если мы не атакуем, переключаемся между бегом и покоем
+            if (body.getLinearVelocity().len() > 0.1f) {
+                setState(EntityState.WALK);
+            } else {
+                setState(EntityState.IDLE);
+            }
         }
+    }
+
+    public void setState(EntityState newState) {
+        if (currentState == newState) return;
+        currentState = newState;
+        stateTime = 0;
     }
 
     public void attack() {
-        if (!isAttacking) {
-            isAttacking = true;
-            stateTime = 0;
-        }
+        // Теперь атака не блокирует управление полностью,
+        // а просто переводит игрока в это состояние
+        setState(EntityState.ATTACK);
     }
 
     public void draw(SpriteBatch batch) {
-        TextureRegion currentFrame;
+        Animation<TextureRegion> anim;
 
-        if (isAttacking) {
-            currentFrame = attackAnim.getKeyFrame(stateTime);
+        // Приоритет анимации атаки
+        if (currentState == EntityState.ATTACK) {
+            anim = Assets.playerAttack;
         } else if (body.getLinearVelocity().len() > 0.1f) {
-            currentFrame = walkAnim.getKeyFrame(stateTime);
+            anim = Assets.playerWalk;
         } else {
-            currentFrame = idleAnim.getKeyFrame(stateTime);
+            anim = Assets.playerIdle;
         }
 
-        // --- ИСПРАВЛЕНИЕ РАЗМЕРА ---
-        // Укажи здесь нужный размер в пикселях (например, 64x64)
-        float drawWidth = 64f;
-        float drawHeight = 64f;
-
-        // Центрируем спрайт относительно узкого физического тела
-        float x = (body.getPosition().x * B2DVars.PPM) - drawWidth / 2;
-        float y = (body.getPosition().y * B2DVars.PPM) - drawHeight / 2;
+        TextureRegion frame = anim.getKeyFrame(stateTime);
+        float w = 64f, h = 64f;
+        float x = (body.getPosition().x * B2DVars.PPM) - w / 2;
+        float y = (body.getPosition().y * B2DVars.PPM) - h / 2;
 
         boolean flip = lookDirection.x < 0;
-
-        // Рисуем с фиксированным размером drawWidth/drawHeight
         if (flip) {
-            batch.draw(currentFrame, x + drawWidth, y, -drawWidth, drawHeight);
+            batch.draw(frame, x + w, y, -w, h);
         } else {
-            batch.draw(currentFrame, x, y, drawWidth, drawHeight);
+            batch.draw(frame, x, y, w, h);
         }
     }
-    public Vector2 getLookDirection() {
-        return lookDirection;
-    }
+
+    public Vector2 getLookDirection() { return lookDirection; }
 }
