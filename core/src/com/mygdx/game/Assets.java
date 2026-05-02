@@ -17,7 +17,7 @@ public class Assets {
     public static Animation<TextureRegion> playerIdle, playerWalk, playerAttack;
 
     // Зомби
-    public static Animation<TextureRegion> zombieIdle, zombieAttack, zombieDeath;
+    public static Animation<TextureRegion> zombieIdle, zombieWalk, zombieAttack, zombieDeath;
 
     public static void load() {
         // Окружение
@@ -38,6 +38,7 @@ public class Assets {
 
         // Зомби
         for (int i = 1; i <= 4; i++) manager.load("zombie/idle/idle" + i + ".png", Texture.class);
+        for (int i = 1; i <= 4; i++) manager.load("zombie/walk/walk" + i + ".png", Texture.class);
         for (int i = 1; i <= 5; i++) manager.load("zombie/attack/attack" + i + ".png", Texture.class);
         for (int i = 1; i <= 3; i++) manager.load("zombie/death/death" + i + ".png", Texture.class);
     }
@@ -61,6 +62,7 @@ public class Assets {
 
         // Анимации Зомби
         zombieIdle = new Animation<>(0.2f, getFrames("zombie/idle/idle", 4), Animation.PlayMode.LOOP);
+        zombieWalk = new Animation<>(0.15f, getFrames("zombie/walk/walk", 4), Animation.PlayMode.LOOP);
         zombieAttack = new Animation<>(0.15f, getFrames("zombie/attack/attack", 5), Animation.PlayMode.LOOP);
         zombieDeath = new Animation<>(0.25f, getFrames("zombie/death/death", 3), Animation.PlayMode.NORMAL);
     }

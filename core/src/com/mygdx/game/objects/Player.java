@@ -4,7 +4,10 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.mygdx.game.Assets;
 import com.mygdx.game.B2DVars;
 import com.mygdx.game.enums.EntityState;
@@ -15,8 +18,19 @@ public class Player {
     private EntityState currentState = EntityState.IDLE;
     private Vector2 lookDirection = new Vector2(1, 0);
 
+    private ShapeRenderer shapeRenderer;
+    private float attackAngleRange = 70f;
+    private float attackRadius = 2.8f;
+
+    private float attackCooldown = 0.5f;
+    private float attackTimer = 0f;
+
+    private int maxLives = 3;
+    private int currentLives = 3;
+
     public Player(World world, float x, float y) {
         createPhysics(world, x, y);
+        shapeRenderer = new ShapeRenderer();
     }
 
     private void createPhysics(World world, float x, float y) {
@@ -41,33 +55,49 @@ public class Player {
 
     public void handleInput(Vector2 move) {
         float baseSpeed = 4.5f;
-
-        // --- ПРАВКА ТУТ ---
-        // Если атакуем — режем скорость пополам
         float speedModifier = (currentState == EntityState.ATTACK) ? 0.5f : 1.0f;
-
         body.setLinearVelocity(move.scl(baseSpeed * speedModifier));
     }
 
     public void update(float dt, Vector2 mousePos) {
         stateTime += dt;
 
+        if (attackTimer > 0) {
+            attackTimer -= dt;
+        }
+
         Vector2 playerPosPx = body.getPosition().cpy().scl(B2DVars.PPM);
         lookDirection.set(mousePos).sub(playerPosPx).nor();
 
-        // Логика состояний
         if (currentState == EntityState.ATTACK) {
             if (Assets.playerAttack.isAnimationFinished(stateTime)) {
                 setState(EntityState.IDLE);
             }
         } else {
-            // Если мы не атакуем, переключаемся между бегом и покоем
             if (body.getLinearVelocity().len() > 0.1f) {
                 setState(EntityState.WALK);
             } else {
                 setState(EntityState.IDLE);
             }
         }
+    }
+
+    public void takeDamage() {
+        if (currentLives > 0) {
+            currentLives--;
+        }
+    }
+
+    public int getLives() {
+        return currentLives;
+    }
+
+    public int getMaxLives() {
+        return maxLives;
+    }
+
+    public boolean canAttack() {
+        return attackTimer <= 0 && currentState != EntityState.ATTACK;
     }
 
     public void setState(EntityState newState) {
@@ -77,15 +107,13 @@ public class Player {
     }
 
     public void attack() {
-        // Теперь атака не блокирует управление полностью,
-        // а просто переводит игрока в это состояние
         setState(EntityState.ATTACK);
+        attackTimer = attackCooldown;
     }
 
     public void draw(SpriteBatch batch) {
         Animation<TextureRegion> anim;
 
-        // Приоритет анимации атаки
         if (currentState == EntityState.ATTACK) {
             anim = Assets.playerAttack;
         } else if (body.getLinearVelocity().len() > 0.1f) {
@@ -107,5 +135,29 @@ public class Player {
         }
     }
 
+    public void drawDebugAttack(Matrix4 projectionMatrix) {
+        shapeRenderer.setProjectionMatrix(projectionMatrix);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(1, 0.3f, 0.3f, 1f);
+
+        Vector2 playerPos = body.getPosition().cpy().scl(B2DVars.PPM);
+
+        // Используем константный угол (70 градусов) или переменную attackAngleRange
+        float angle = lookDirection.angleDeg();
+        float range = 70f; // Угол обзора в градусах
+
+        shapeRenderer.arc(
+                playerPos.x, playerPos.y,
+                attackRadius * B2DVars.PPM,
+                angle - (range / 2),
+                range
+        );
+        shapeRenderer.end();
+    }
+
     public Vector2 getLookDirection() { return lookDirection; }
+
+    public void dispose() {
+        if (shapeRenderer != null) shapeRenderer.dispose();
+    }
 }
