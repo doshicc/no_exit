@@ -19,6 +19,10 @@ public class Assets {
     // Зомби
     public static Animation<TextureRegion> zombieIdle, zombieWalk, zombieAttack, zombieDeath;
 
+    // Ссылки для сердец
+    public static TextureRegion fullHeart;
+    public static TextureRegion emptyHeart;
+
     public static void load() {
         // Окружение
         manager.load("level/floor/floor_default.png", Texture.class);
@@ -30,6 +34,9 @@ public class Assets {
         manager.load("level/wall/leftRightWall.png", Texture.class);
         manager.load("level/objects/box.png", Texture.class);
         manager.load("level/objects/shelf.png", Texture.class);
+
+        manager.load("player/hearts/full.png", Texture.class);
+        manager.load("player/hearts/null.png", Texture.class);
 
         // Игрок
         for (int i = 1; i <= 2; i++) manager.load("player/idle/idle" + i + ".png", Texture.class);
@@ -54,6 +61,9 @@ public class Assets {
         leftRightWall = new TextureRegion(manager.get("level/wall/leftRightWall.png", Texture.class));
         box = new TextureRegion(manager.get("level/objects/box.png", Texture.class));
         shelf = new TextureRegion(manager.get("level/objects/shelf.png", Texture.class));
+
+        fullHeart = new TextureRegion(manager.get("player/hearts/full.png", Texture.class));
+        emptyHeart = new TextureRegion(manager.get("player/hearts/null.png", Texture.class));
 
         // Анимации Игрока
         playerIdle = new Animation<>(0.3f, getFrames("player/idle/idle", 2), Animation.PlayMode.LOOP);

@@ -10,6 +10,13 @@ public class DesktopLauncher {
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
 		config.setForegroundFPS(60);
 		config.setTitle("DrunkenOrbit");
+
+		// Задаем размер окна в соответствии с разрешением, прописанным в MyGdxGame
+		config.setWindowedMode(MyGdxGame.SCR_WIDTH, MyGdxGame.SCR_HEIGHT);
+
+		// Разрешаем пользователю изменять размер окна (по желанию)
+		config.setResizable(true);
+
 		new Lwjgl3Application(new MyGdxGame(), config);
 	}
 }

@@ -10,6 +10,7 @@ import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.mygdx.game.Assets;
 import com.mygdx.game.B2DVars;
+import com.mygdx.game.enums.EntityState; // или твой EntityState
 import com.mygdx.game.enums.EntityState;
 
 public class Player {
@@ -27,6 +28,10 @@ public class Player {
 
     private int maxLives = 3;
     private int currentLives = 3;
+
+    // Таймер кулдауна урона, чтобы игрок не умирал мгновенно при контакте
+    private float damageCooldown = 1.0f;
+    private float damageTimer = 0f;
 
     public Player(World world, float x, float y) {
         createPhysics(world, x, y);
@@ -66,6 +71,10 @@ public class Player {
             attackTimer -= dt;
         }
 
+        if (damageTimer > 0) {
+            damageTimer -= dt;
+        }
+
         Vector2 playerPosPx = body.getPosition().cpy().scl(B2DVars.PPM);
         lookDirection.set(mousePos).sub(playerPosPx).nor();
 
@@ -83,8 +92,11 @@ public class Player {
     }
 
     public void takeDamage() {
-        if (currentLives > 0) {
-            currentLives--;
+        if (damageTimer <= 0) {
+            if (currentLives > 0) {
+                currentLives--;
+            }
+            damageTimer = damageCooldown;
         }
     }
 
@@ -141,10 +153,8 @@ public class Player {
         shapeRenderer.setColor(1, 0.3f, 0.3f, 1f);
 
         Vector2 playerPos = body.getPosition().cpy().scl(B2DVars.PPM);
-
-        // Используем константный угол (70 градусов) или переменную attackAngleRange
         float angle = lookDirection.angleDeg();
-        float range = 70f; // Угол обзора в градусах
+        float range = 70f;
 
         shapeRenderer.arc(
                 playerPos.x, playerPos.y,

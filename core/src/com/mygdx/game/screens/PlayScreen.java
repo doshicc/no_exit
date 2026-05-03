@@ -5,7 +5,9 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -20,6 +22,7 @@ import com.mygdx.game.renderers.LevelRenderer;
 import com.mygdx.game.objects.Player;
 import com.mygdx.game.objects.EnemyZombie;
 import com.mygdx.game.data.RoomData;
+import com.mygdx.game.managers.AttackListener;
 
 public class PlayScreen implements Screen {
     private final SpriteBatch batch;
@@ -36,8 +39,11 @@ public class PlayScreen implements Screen {
     private float roomW = 1280f, roomH = 720f, corridorGap = 350f, tileSize = 64f;
     private boolean roomCleared = false;
 
-    // Новая камера для UI, чтобы сердечки не двигались вместе с игроком
     private OrthographicCamera uiCam;
+
+    // Текстуры для сердечек
+    private TextureRegion testFullHeart;
+    private TextureRegion testEmptyHeart;
 
     public PlayScreen(MyGdxGame game) {
         this.batch = game.batch;
@@ -49,7 +55,6 @@ public class PlayScreen implements Screen {
         cam = new OrthographicCamera();
         cam.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
-        // Камера для интерфейса
         uiCam = new OrthographicCamera();
         uiCam.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
@@ -60,7 +65,21 @@ public class PlayScreen implements Screen {
         zombies = new Array<>();
 
         currentRoom = levelManager.createRoom(0, 0, roomW, roomH, true);
+
+        // 1. Сначала инициализируем игрока
         player = new Player(world, 200, roomH / 2);
+
+        // 2. Затем передаем его в слушатель контактов
+        world.setContactListener(new AttackListener(player));
+
+        // Пытаемся загрузить текстуры сердечек
+        try {
+            testFullHeart = new TextureRegion(new Texture(Gdx.files.internal("player/hearts/full.png")));
+            testEmptyHeart = new TextureRegion(new Texture(Gdx.files.internal("player/hearts/null.png")));
+        } catch (Exception e) {
+            testFullHeart = Assets.floorDefault;
+            testEmptyHeart = Assets.upWall;
+        }
 
         spawnZombies(currentRoom);
     }
@@ -102,17 +121,16 @@ public class PlayScreen implements Screen {
 
         int currentLives = player.getLives();
         int maxLives = player.getMaxLives();
+
         float heartSize = 32f;
         float startX = 20f;
         float startY = Gdx.graphics.getHeight() - heartSize - 20f;
 
         for (int i = 0; i < maxLives; i++) {
             if (i < currentLives) {
-                // Если жизнь есть — рисуем полное сердце (замените на Assets.fullHeart, если нужно)
-                batch.draw(Assets.floorDefault, startX + (i * 40), startY, heartSize, heartSize);
+                batch.draw(testFullHeart, startX + (i * 40), startY, heartSize, heartSize);
             } else {
-                // Если жизни нет — рисуем пустое сердце (замените на Assets.emptyHeart)
-                batch.draw(Assets.upWall, startX + (i * 40), startY, heartSize, heartSize);
+                batch.draw(testEmptyHeart, startX + (i * 40), startY, heartSize, heartSize);
             }
         }
 
@@ -164,7 +182,7 @@ public class PlayScreen implements Screen {
             }
         }
 
-        handleInput(dt);
+        handleInput(dt); // Обрабатывает ввод и вызывает player.update()
         for (EnemyZombie z : zombies) z.update(dt, player.body.getPosition(), player);
 
         float camX = Math.max(player.body.getPosition().x * B2DVars.PPM, Gdx.graphics.getWidth() / 2f);
@@ -191,21 +209,21 @@ public class PlayScreen implements Screen {
     private void handleInput(float dt) {
         Vector3 mouse = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
         cam.unproject(mouse);
+
         player.update(dt, new Vector2(mouse.x, mouse.y));
 
         Vector2 move = new Vector2(0, 0);
-        if(Gdx.input.isKeyPressed(Input.Keys.W)) move.y += 1;
-        if(Gdx.input.isKeyPressed(Input.Keys.S)) move.y -= 1;
-        if(Gdx.input.isKeyPressed(Input.Keys.A)) move.x -= 1;
-        if(Gdx.input.isKeyPressed(Input.Keys.D)) move.x += 1;
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) move.y += 1;
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) move.y -= 1;
+        if (Gdx.input.isKeyPressed(Input.Keys.A)) move.x -= 1;
+        if (Gdx.input.isKeyPressed(Input.Keys.D)) move.x += 1;
         player.handleInput(move.nor());
 
-        if(Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && player.canAttack()) {
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && player.canAttack()) {
             player.attack();
             handleCombat();
         }
     }
-
 
     private void handleCombat() {
         for (EnemyZombie z : zombies) {
@@ -223,12 +241,8 @@ public class PlayScreen implements Screen {
 
                 if (angleDeg < 35f) {
                     z.takeDamage(1);
-
-                    // Включаем стан на 0.3 секунды, чтобы зомби не сопротивлялся
                     z.applyStun(0.3f);
-
-                    // Задаем скорость напрямую, отбрасывая зомби назад
-                    Vector2 pushVelocity = toZ.cpy().nor().scl(6f); // Сила отскока (можно регулировать)
+                    Vector2 pushVelocity = toZ.cpy().nor().scl(6f);
                     z.body.setLinearVelocity(pushVelocity);
                 }
             }
