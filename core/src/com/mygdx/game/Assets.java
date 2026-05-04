@@ -14,14 +14,16 @@ public class Assets {
     public static Array<TextureRegion> floorDetails = new Array<>();
 
     // Игрок
-    public static Animation<TextureRegion> playerIdle, playerWalk, playerAttack;
+    public static Animation<TextureRegion> playerIdle, playerWalk, playerAttack, playerDeath;
 
     // Зомби
     public static Animation<TextureRegion> zombieIdle, zombieWalk, zombieAttack, zombieDeath;
 
     // Ссылки для сердец
-    public static TextureRegion fullHeart;
-    public static TextureRegion emptyHeart;
+    public static TextureRegion emptyHeart, extraHeart, fullHeart;
+
+    // Ссылки для бафов
+    public static TextureRegion powerupHeal, powerupShield, powerupOneShot;
 
     public static void load() {
         // Окружение
@@ -35,13 +37,20 @@ public class Assets {
         manager.load("level/objects/box.png", Texture.class);
         manager.load("level/objects/shelf.png", Texture.class);
 
+        manager.load("player/hearts/extrahealth.png", Texture.class);
         manager.load("player/hearts/full.png", Texture.class);
         manager.load("player/hearts/null.png", Texture.class);
+
+
+        manager.load("player/buff/powerup_heal.png", Texture.class);
+        manager.load("player/buff/powerup_shield.png", Texture.class);
+        manager.load("player/buff/powerup_oneshot.png", Texture.class);
 
         // Игрок
         for (int i = 1; i <= 2; i++) manager.load("player/idle/idle" + i + ".png", Texture.class);
         for (int i = 1; i <= 6; i++) manager.load("player/walk/walk" + i + ".png", Texture.class);
         for (int i = 1; i <= 5; i++) manager.load("player/attack/attack" + i + ".png", Texture.class);
+        for (int i = 1; i <= 5; i++) manager.load("player/death/death" + i + ".png", Texture.class);
 
         // Зомби
         for (int i = 1; i <= 4; i++) manager.load("zombie/idle/idle" + i + ".png", Texture.class);
@@ -64,11 +73,18 @@ public class Assets {
 
         fullHeart = new TextureRegion(manager.get("player/hearts/full.png", Texture.class));
         emptyHeart = new TextureRegion(manager.get("player/hearts/null.png", Texture.class));
+        extraHeart = new TextureRegion(manager.get("player/hearts/extrahealth.png", Texture.class));
+
+        // Исправленный блок
+        powerupHeal = new TextureRegion(manager.get("player/buff/powerup_heal.png", Texture.class));
+        powerupShield = new TextureRegion(manager.get("player/buff/powerup_shield.png", Texture.class));
+        powerupOneShot = new TextureRegion(manager.get("player/buff/powerup_oneshot.png", Texture.class));
 
         // Анимации Игрока
         playerIdle = new Animation<>(0.3f, getFrames("player/idle/idle", 2), Animation.PlayMode.LOOP);
         playerWalk = new Animation<>(0.1f, getFrames("player/walk/walk", 6), Animation.PlayMode.LOOP);
         playerAttack = new Animation<>(0.07f, getFrames("player/attack/attack", 5), Animation.PlayMode.NORMAL);
+        playerDeath = new Animation<>(0.25f, getFrames("player/death/death", 5), Animation.PlayMode.NORMAL);
 
         // Анимации Зомби
         zombieIdle = new Animation<>(0.2f, getFrames("zombie/idle/idle", 4), Animation.PlayMode.LOOP);

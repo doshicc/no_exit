@@ -21,6 +21,7 @@ import com.mygdx.game.managers.LevelManager;
 import com.mygdx.game.renderers.LevelRenderer;
 import com.mygdx.game.objects.Player;
 import com.mygdx.game.objects.EnemyZombie;
+import com.mygdx.game.objects.PowerUp;
 import com.mygdx.game.data.RoomData;
 import com.mygdx.game.managers.AttackListener;
 
@@ -35,15 +36,18 @@ public class PlayScreen implements Screen {
     private BodyFactory bodyFactory;
 
     private Array<EnemyZombie> zombies;
+    private Array<PowerUp> powerUps;
     private RoomData currentRoom, nextRoom;
     private float roomW = 1280f, roomH = 720f, corridorGap = 350f, tileSize = 64f;
     private boolean roomCleared = false;
 
     private OrthographicCamera uiCam;
 
-    // Текстуры для сердечек
-    private TextureRegion testFullHeart;
-    private TextureRegion testEmptyHeart;
+    private TextureRegion uiFullHeart;
+    private TextureRegion uiEmptyHeart;
+    private TextureRegion uiExtraHeart;
+
+    private float oneShotTimer = 0f;
 
     public PlayScreen(MyGdxGame game) {
         this.batch = game.batch;
@@ -63,23 +67,15 @@ public class PlayScreen implements Screen {
         levelRenderer = new LevelRenderer();
 
         zombies = new Array<>();
+        powerUps = new Array<>();
 
         currentRoom = levelManager.createRoom(0, 0, roomW, roomH, true);
-
-        // 1. Сначала инициализируем игрока
         player = new Player(world, 200, roomH / 2);
-
-        // 2. Затем передаем его в слушатель контактов
         world.setContactListener(new AttackListener(player));
 
-        // Пытаемся загрузить текстуры сердечек
-        try {
-            testFullHeart = new TextureRegion(new Texture(Gdx.files.internal("player/hearts/full.png")));
-            testEmptyHeart = new TextureRegion(new Texture(Gdx.files.internal("player/hearts/null.png")));
-        } catch (Exception e) {
-            testFullHeart = Assets.floorDefault;
-            testEmptyHeart = Assets.upWall;
-        }
+        uiFullHeart = Assets.fullHeart;
+        uiEmptyHeart = Assets.emptyHeart;
+        uiExtraHeart = Assets.extraHeart;
 
         spawnZombies(currentRoom);
     }
@@ -91,7 +87,6 @@ public class PlayScreen implements Screen {
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // Рисуем игровой мир
         batch.setProjectionMatrix(cam.combined);
         batch.begin();
 
@@ -109,29 +104,37 @@ public class PlayScreen implements Screen {
         }
 
         for (EnemyZombie z : zombies) z.draw(batch);
+        for (PowerUp p : powerUps) p.draw(batch);
         player.draw(batch);
 
         batch.end();
 
+        // Отрисовка наводки атаки (код возвращён в классе Player.java)
         player.drawDebugAttack(cam.combined);
 
-        // Рисуем интерфейс (сердечки)
         batch.setProjectionMatrix(uiCam.combined);
         batch.begin();
 
         int currentLives = player.getLives();
         int maxLives = player.getMaxLives();
+        boolean hasExtra = player.hasExtraLife();
 
-        float heartSize = 32f;
+        float heartSize = 32f; // Единый размер для всех сердечек
         float startX = 20f;
         float startY = Gdx.graphics.getHeight() - heartSize - 20f;
+        float gap = 40f;
 
         for (int i = 0; i < maxLives; i++) {
             if (i < currentLives) {
-                batch.draw(testFullHeart, startX + (i * 40), startY, heartSize, heartSize);
+                batch.draw(uiFullHeart, startX + (i * gap), startY, heartSize, heartSize);
             } else {
-                batch.draw(testEmptyHeart, startX + (i * 40), startY, heartSize, heartSize);
+                batch.draw(uiEmptyHeart, startX + (i * gap), startY, heartSize, heartSize);
             }
+        }
+
+        if (hasExtra) {
+            // Теперь extraHeart рисуется с тем же размером 32f, что и обычные
+            batch.draw(uiExtraHeart, startX + (3 * gap), startY, heartSize, heartSize);
         }
 
         batch.end();
@@ -154,10 +157,23 @@ public class PlayScreen implements Screen {
     private void update(float dt) {
         world.step(1/60f, 6, 2);
 
+        if (oneShotTimer > 0) {
+            oneShotTimer -= dt;
+        }
+
         if (!roomCleared) {
             boolean anyAlive = false;
-            for (EnemyZombie z : zombies) {
-                if (!z.isDead) { anyAlive = true; break; }
+            for (int i = 0; i < zombies.size; i++) {
+                EnemyZombie z = zombies.get(i);
+
+                if (z.isDead && z.getPowerUp() == null) {
+                    PowerUp p = z.trySpawnPowerUp();
+                    if (p != null) {
+                        powerUps.add(p);
+                    }
+                }
+
+                if (!z.isDead) anyAlive = true;
             }
             if (!anyAlive) roomCleared = true;
         }
@@ -182,12 +198,46 @@ public class PlayScreen implements Screen {
             }
         }
 
-        handleInput(dt); // Обрабатывает ввод и вызывает player.update()
+        handleInput(dt);
+
+        Vector2 playerPos = player.body.getPosition().cpy().scl(B2DVars.PPM);
+
+        for (int i = powerUps.size - 1; i >= 0; i--) {
+            PowerUp p = powerUps.get(i);
+            p.update(dt);
+
+            if (playerPos.dst(p.basePosition) < 40f) {
+                applyPowerUp(p);
+                powerUps.removeIndex(i);
+            }
+        }
+
         for (EnemyZombie z : zombies) z.update(dt, player.body.getPosition(), player);
 
         float camX = Math.max(player.body.getPosition().x * B2DVars.PPM, Gdx.graphics.getWidth() / 2f);
         cam.position.lerp(new Vector3(camX, roomH / 2, 0), 0.1f);
         cam.update();
+    }
+
+    private void applyPowerUp(PowerUp p) {
+        switch (p.type) {
+            case HEAL:
+                player.heal();
+                Gdx.app.log("POWERUP", "Здоровье восстановлено!");
+                break;
+            case SHIELD:
+                player.addExtraLife();
+                break;
+            case ONE_SHOT:
+                oneShotTimer = 5f;
+                for (EnemyZombie z : zombies) {
+                    if (!z.isDead) {
+                        z.takeDamage(10);
+                    }
+                }
+                Gdx.app.log("POWERUP", "Супер-баф: Уничтожение всех зомби!");
+                break;
+        }
     }
 
     private void createCorridorPhysics() {
@@ -201,9 +251,15 @@ public class PlayScreen implements Screen {
     }
 
     private void spawnZombies(RoomData room) {
-        zombies.add(new EnemyZombie(world, room.position.x + 700, room.position.y + 300));
-        zombies.add(new EnemyZombie(world, room.position.x + 1000, room.position.y + 500));
-        zombies.add(new EnemyZombie(world, room.position.x + 850, room.position.y + 150));
+        int numberOfZombies = MathUtils.random(4, 7);
+        float padding = 100f;
+
+        for (int i = 0; i < numberOfZombies; i++) {
+            float randomX = room.position.x + MathUtils.random(padding, roomW - padding);
+            float randomY = room.position.y + MathUtils.random(padding, roomH - padding);
+
+            zombies.add(new EnemyZombie(world, randomX, randomY));
+        }
     }
 
     private void handleInput(float dt) {
@@ -231,7 +287,7 @@ public class PlayScreen implements Screen {
 
             Vector2 toZ = z.body.getPosition().cpy().sub(player.body.getPosition());
 
-            if (toZ.len() < 2.8f) {
+            if (toZ.len() < player.getAttackRadius()) {
                 Vector2 lookDir = player.getLookDirection().cpy().nor();
                 Vector2 targetDir = toZ.cpy().nor();
 
@@ -239,7 +295,7 @@ public class PlayScreen implements Screen {
                 float angleRad = (float) Math.acos(MathUtils.clamp(dotProduct, -1f, 1f));
                 float angleDeg = MathUtils.radiansToDegrees * angleRad;
 
-                if (angleDeg < 35f) {
+                if (angleDeg < player.getAttackAngleRange() / 2f) {
                     z.takeDamage(1);
                     z.applyStun(0.3f);
                     Vector2 pushVelocity = toZ.cpy().nor().scl(6f);
@@ -252,20 +308,23 @@ public class PlayScreen implements Screen {
     private void cleanupZombies() {
         for (int i = zombies.size - 1; i >= 0; i--) {
             EnemyZombie z = zombies.get(i);
-            if (z.isDead || (z.body.getPosition().x * B2DVars.PPM < currentRoom.position.x + roomW)) {
-                world.destroyBody(z.body);
+
+            if (z.isDead || (z.body != null && z.body.getPosition().x * B2DVars.PPM < currentRoom.position.x + roomW)) {
+                if (z.body != null) {
+                    world.destroyBody(z.body);
+                }
                 zombies.removeIndex(i);
             }
         }
+        powerUps.clear();
     }
 
     @Override public void resize(int width, int height) { cam.setToOrtho(false, width, height); }
-    @Override
-    public void dispose() {
-        world.dispose();
-        player.dispose();
-    }
     @Override public void pause() {}
     @Override public void resume() {}
     @Override public void hide() {}
+    @Override public void dispose() {
+        world.dispose();
+        player.dispose();
+    }
 }

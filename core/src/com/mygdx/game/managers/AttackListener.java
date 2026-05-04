@@ -7,6 +7,7 @@ import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.Manifold;
 import com.mygdx.game.objects.Player;
+import com.mygdx.game.objects.EnemyZombie;
 
 public class AttackListener implements ContactListener {
 
@@ -26,13 +27,26 @@ public class AttackListener implements ContactListener {
         Object dataA = fa.getUserData();
         Object dataB = fb.getUserData();
 
-        if (dataA != null && dataB != null) {
-            String strA = dataA.toString();
-            String strB = dataB.toString();
+        // Проверяем, участвует ли игрок в столкновении
+        boolean isPlayerA = "player".equals(dataA) || (fa.getBody().getUserData() instanceof Player);
+        boolean isPlayerB = "player".equals(dataB) || (fb.getBody().getUserData() instanceof Player);
 
-            if ((strA.equals("player") && strB.contains("zombie")) ||
-                    (strB.equals("player") && strA.contains("zombie"))) {
+        if (isPlayerA || isPlayerB) {
+            EnemyZombie zombie = null;
 
+            // Пытаемся найти объект EnemyZombie из userData у тел (Body)
+            if (fa.getBody().getUserData() instanceof EnemyZombie) {
+                zombie = (EnemyZombie) fa.getBody().getUserData();
+            } else if (fb.getBody().getUserData() instanceof EnemyZombie) {
+                zombie = (EnemyZombie) fb.getBody().getUserData();
+            }
+
+            // Если зомби существует и мертв (isDead == true), игнорируем урон
+            if (zombie != null && zombie.isDead) {
+                return;
+            }
+
+            if (zombie != null) {
                 Gdx.app.log("ATTACK", "Игрок получает урон!");
                 if (player != null) {
                     player.takeDamage();

@@ -3,6 +3,7 @@ package com.mygdx.game.objects;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.mygdx.game.Assets;
@@ -21,8 +22,8 @@ public class EnemyZombie {
     private float cooldownTimer = 0f;
     private boolean isFacingLeft = false;
 
-    // Таймер оглушения после удара (в секундах)
     private float hitStunTimer = 0f;
+    private PowerUp droppedPowerUp = null;
 
     public EnemyZombie(World world, float x, float y) {
         createPhysics(world, x, y);
@@ -43,8 +44,6 @@ public class EnemyZombie {
         fdef.filter.categoryBits = (short) 2;
 
         body.createFixture(fdef).setUserData("zombie");
-
-        // Сохраняем ссылку на сам объект зомби в теле
         body.setUserData(this);
 
         shape.dispose();
@@ -53,13 +52,14 @@ public class EnemyZombie {
     public void update(float dt, Vector2 playerPos, Player player) {
         if (isDead) {
             stateTime += dt;
-            body.setLinearVelocity(0, 0);
+            if (body != null) {
+                body.setLinearVelocity(0, 0);
+            }
             return;
         }
         stateTime += dt;
         cooldownTimer += dt;
 
-        // Уменьшаем таймер оглушения без принудительной остановки скорости
         if (hitStunTimer > 0) {
             hitStunTimer -= dt;
             return;
@@ -79,7 +79,6 @@ public class EnemyZombie {
             } else {
                 body.setLinearVelocity(toPlayer.nor().scl(0.9f));
 
-                // Наносим урон игроку
                 if (dist < 1.8f && cooldownTimer >= attackCooldown) {
                     player.takeDamage();
                     cooldownTimer = 0f;
@@ -113,7 +112,6 @@ public class EnemyZombie {
         if (health <= 0) die();
     }
 
-    // Метод для активации оглушения (отскока)
     public void applyStun(float duration) {
         this.hitStunTimer = duration;
     }
@@ -121,7 +119,35 @@ public class EnemyZombie {
     private void die() {
         isDead = true;
         setState(EntityState.DEATH);
-        for (Fixture f : body.getFixtureList()) f.setSensor(true);
+
+        if (body != null) {
+            for (Fixture fixture : body.getFixtureList()) {
+                fixture.setSensor(true);
+                fixture.setFilterData(new Filter());
+            }
+            body.setUserData(null);
+        }
+    }
+
+    public PowerUp trySpawnPowerUp() {
+        if (MathUtils.random() <= 0.05f) {
+            float posX = (body != null ? body.getPosition().x : 0f) * B2DVars.PPM;
+            float posY = (body != null ? body.getPosition().y : 0f) * B2DVars.PPM;
+
+            PowerUp.Type type;
+            int rand = MathUtils.random(1, 3);
+            if (rand == 1) {
+                type = PowerUp.Type.HEAL;
+            } else if (rand == 2) {
+                type = PowerUp.Type.SHIELD;
+            } else {
+                type = PowerUp.Type.ONE_SHOT;
+            }
+
+            droppedPowerUp = new PowerUp(posX, posY, type);
+            return droppedPowerUp;
+        }
+        return null;
     }
 
     public void setState(EntityState newState) {
@@ -152,9 +178,13 @@ public class EnemyZombie {
         }
 
         TextureRegion frame = anim.getKeyFrame(stateTime, isLooping);
-        float x = (body.getPosition().x * B2DVars.PPM);
-        float y = (body.getPosition().y * B2DVars.PPM);
+        float x = body != null ? (body.getPosition().x * B2DVars.PPM) : 0f;
+        float y = body != null ? (body.getPosition().y * B2DVars.PPM) : 0f;
 
         batch.draw(frame, isFacingLeft ? x + 32 : x - 32, y - 32, isFacingLeft ? -64 : 64, 64);
+    }
+
+    public PowerUp getPowerUp() {
+        return droppedPowerUp;
     }
 }

@@ -1,16 +1,18 @@
 package com.mygdx.game.objects;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.mygdx.game.Assets;
 import com.mygdx.game.B2DVars;
-import com.mygdx.game.enums.EntityState; // или твой EntityState
 import com.mygdx.game.enums.EntityState;
 
 public class Player {
@@ -21,17 +23,18 @@ public class Player {
 
     private ShapeRenderer shapeRenderer;
     private float attackAngleRange = 70f;
-    private float attackRadius = 2.8f;
+    private float attackRadius = 2.8f; // Дистанция атаки в метрах Box2D
 
     private float attackCooldown = 0.5f;
     private float attackTimer = 0f;
 
     private int maxLives = 3;
     private int currentLives = 3;
+    private boolean hasExtraLife = false;
 
-    // Таймер кулдауна урона, чтобы игрок не умирал мгновенно при контакте
     private float damageCooldown = 1.0f;
     private float damageTimer = 0f;
+    public boolean isDead = false;
 
     public Player(World world, float x, float y) {
         createPhysics(world, x, y);
@@ -43,7 +46,6 @@ public class Player {
         bdef.type = BodyDef.BodyType.DynamicBody;
         bdef.position.set(x / B2DVars.PPM, y / B2DVars.PPM);
         bdef.fixedRotation = true;
-        bdef.linearDamping = 1.0f;
         body = world.createBody(bdef);
 
         CircleShape shape = new CircleShape();
@@ -51,29 +53,25 @@ public class Player {
 
         FixtureDef fdef = new FixtureDef();
         fdef.shape = shape;
-        fdef.friction = 0.5f;
-        fdef.filter.categoryBits = B2DVars.BIT_PLAYER;
+        fdef.filter.categoryBits = (short) 1;
+        fdef.filter.maskBits = (short) (2 | 4 | 8);
 
         body.createFixture(fdef).setUserData("player");
-        shape.dispose();
-    }
+        body.setUserData(this);
 
-    public void handleInput(Vector2 move) {
-        float baseSpeed = 4.5f;
-        float speedModifier = (currentState == EntityState.ATTACK) ? 0.5f : 1.0f;
-        body.setLinearVelocity(move.scl(baseSpeed * speedModifier));
+        shape.dispose();
     }
 
     public void update(float dt, Vector2 mousePos) {
         stateTime += dt;
 
-        if (attackTimer > 0) {
-            attackTimer -= dt;
+        if (isDead) {
+            body.setLinearVelocity(0, 0);
+            return;
         }
 
-        if (damageTimer > 0) {
-            damageTimer -= dt;
-        }
+        if (attackTimer > 0) attackTimer -= dt;
+        if (damageTimer > 0) damageTimer -= dt;
 
         Vector2 playerPosPx = body.getPosition().cpy().scl(B2DVars.PPM);
         lookDirection.set(mousePos).sub(playerPosPx).nor();
@@ -92,12 +90,71 @@ public class Player {
     }
 
     public void takeDamage() {
+        if (isDead) return;
+
         if (damageTimer <= 0) {
-            if (currentLives > 0) {
+            if (hasExtraLife) {
+                hasExtraLife = false;
+                Gdx.app.log("PLAYER", "Потеряна экстра-жизнь!");
+            } else if (currentLives > 0) {
                 currentLives--;
+                Gdx.app.log("PLAYER", "ХП: " + currentLives);
+                if (currentLives <= 0) {
+                    die();
+                }
             }
             damageTimer = damageCooldown;
         }
+    }
+
+    public void addExtraLife() {
+        if (!hasExtraLife) {
+            hasExtraLife = true;
+            Gdx.app.log("PLAYER", "Получена экстра-жизнь!");
+        }
+    }
+
+    public void heal() {
+        if (currentLives < maxLives) {
+            currentLives++;
+            Gdx.app.log("PLAYER", "ХП восстановлено: " + currentLives);
+        }
+    }
+
+    private void die() {
+        isDead = true;
+        setState(EntityState.DEATH);
+        if (body != null) {
+            for (Fixture fixture : body.getFixtureList()) {
+                fixture.setSensor(true);
+            }
+        }
+    }
+
+    public void handleInput(Vector2 move) {
+        if (isDead) return;
+        body.setLinearVelocity(move.scl(3.5f));
+    }
+
+    public boolean canAttack() {
+        return attackTimer <= 0 && !isDead;
+    }
+
+    public void attack() {
+        if (!canAttack()) return;
+        setState(EntityState.ATTACK);
+        attackTimer = attackCooldown;
+    }
+
+    public void setState(EntityState state) {
+        if (currentState != state) {
+            currentState = state;
+            stateTime = 0;
+        }
+    }
+
+    public Vector2 getLookDirection() {
+        return lookDirection;
     }
 
     public int getLives() {
@@ -108,66 +165,70 @@ public class Player {
         return maxLives;
     }
 
-    public boolean canAttack() {
-        return attackTimer <= 0 && currentState != EntityState.ATTACK;
+    public boolean hasExtraLife() {
+        return hasExtraLife;
     }
 
-    public void setState(EntityState newState) {
-        if (currentState == newState) return;
-        currentState = newState;
-        stateTime = 0;
+    public float getAttackRadius() {
+        return attackRadius;
     }
 
-    public void attack() {
-        setState(EntityState.ATTACK);
-        attackTimer = attackCooldown;
+    public float getAttackAngleRange() {
+        return attackAngleRange;
     }
 
     public void draw(SpriteBatch batch) {
         Animation<TextureRegion> anim;
+        boolean isLooping = true;
 
-        if (currentState == EntityState.ATTACK) {
-            anim = Assets.playerAttack;
-        } else if (body.getLinearVelocity().len() > 0.1f) {
-            anim = Assets.playerWalk;
-        } else {
-            anim = Assets.playerIdle;
+        switch (currentState) {
+            case ATTACK:
+                anim = Assets.playerAttack;
+                isLooping = false;
+                break;
+            case DEATH:
+                anim = Assets.playerDeath;
+                isLooping = false;
+                break;
+            case WALK:
+                anim = Assets.playerWalk;
+                break;
+            default:
+                anim = Assets.playerIdle;
+                break;
         }
 
-        TextureRegion frame = anim.getKeyFrame(stateTime);
-        float w = 64f, h = 64f;
-        float x = (body.getPosition().x * B2DVars.PPM) - w / 2;
-        float y = (body.getPosition().y * B2DVars.PPM) - h / 2;
+        TextureRegion frame = anim.getKeyFrame(stateTime, isLooping);
+        float x = body.getPosition().x * B2DVars.PPM;
+        float y = body.getPosition().y * B2DVars.PPM;
 
-        boolean flip = lookDirection.x < 0;
-        if (flip) {
-            batch.draw(frame, x + w, y, -w, h);
-        } else {
-            batch.draw(frame, x, y, w, h);
-        }
+        boolean faceLeft = lookDirection.x < 0;
+        batch.draw(frame, faceLeft ? x + 32 : x - 32, y - 32, faceLeft ? -64 : 64, 64);
     }
 
-    public void drawDebugAttack(Matrix4 projectionMatrix) {
-        shapeRenderer.setProjectionMatrix(projectionMatrix);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(1, 0.3f, 0.3f, 1f);
+    // Метод отрисовки дуги сектора атаки
+    public void drawDebugAttack(Matrix4 projMatrix) {
+        if (isDead) return;
 
-        Vector2 playerPos = body.getPosition().cpy().scl(B2DVars.PPM);
+        Vector2 playerPosPx = body.getPosition().cpy().scl(B2DVars.PPM);
         float angle = lookDirection.angleDeg();
-        float range = 70f;
+        float radiusPx = attackRadius * B2DVars.PPM;
+
+        shapeRenderer.setProjectionMatrix(projMatrix);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(Color.RED);
 
         shapeRenderer.arc(
-                playerPos.x, playerPos.y,
-                attackRadius * B2DVars.PPM,
-                angle - (range / 2),
-                range
+                playerPosPx.x, playerPosPx.y,
+                radiusPx,
+                angle - (attackAngleRange / 2f),
+                attackAngleRange
         );
+
         shapeRenderer.end();
     }
 
-    public Vector2 getLookDirection() { return lookDirection; }
-
     public void dispose() {
-        if (shapeRenderer != null) shapeRenderer.dispose();
+        shapeRenderer.dispose();
     }
 }
