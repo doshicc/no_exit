@@ -24,6 +24,7 @@ public class EnemyZombie {
 
     private float hitStunTimer = 0f;
     private PowerUp droppedPowerUp = null;
+    private boolean hasRolledPowerUp = false; // Флаг: бросок уже сделан
 
     public EnemyZombie(World world, float x, float y) {
         createPhysics(world, x, y);
@@ -130,7 +131,15 @@ public class EnemyZombie {
     }
 
     public PowerUp trySpawnPowerUp() {
-        if (MathUtils.random() <= 0.05f) {
+        // Если уже делали попытку, сразу выходим
+        if (hasRolledPowerUp) {
+            return null;
+        }
+
+        hasRolledPowerUp = true; // Отмечаем, что розыгрыш произошел
+
+        // Шанс 2%
+        if (MathUtils.random() <= 0.15f) {
             float posX = (body != null ? body.getPosition().x : 0f) * B2DVars.PPM;
             float posY = (body != null ? body.getPosition().y : 0f) * B2DVars.PPM;
 
@@ -147,6 +156,7 @@ public class EnemyZombie {
             droppedPowerUp = new PowerUp(posX, posY, type);
             return droppedPowerUp;
         }
+
         return null;
     }
 

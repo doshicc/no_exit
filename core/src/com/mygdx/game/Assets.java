@@ -1,9 +1,12 @@
 package com.mygdx.game;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.utils.Array;
 
 public class Assets {
@@ -19,14 +22,19 @@ public class Assets {
     // Зомби
     public static Animation<TextureRegion> zombieIdle, zombieWalk, zombieAttack, zombieDeath;
 
-    // Ссылки для сердец
+    // Сердца
     public static TextureRegion emptyHeart, extraHeart, fullHeart;
 
-    // Ссылки для бафов
+    // Бафы
     public static TextureRegion powerupHeal, powerupShield, powerupOneShot;
 
+    // Шрифты
+    public static BitmapFont mainFont;
+
+    // ФОН МЕНЮ
+    public static Texture menuBackground;
+
     public static void load() {
-        // Окружение
         manager.load("level/floor/floor_default.png", Texture.class);
         manager.load("level/floor/floor1.png", Texture.class);
         manager.load("level/floor/floor2.png", Texture.class);
@@ -41,18 +49,18 @@ public class Assets {
         manager.load("player/hearts/full.png", Texture.class);
         manager.load("player/hearts/null.png", Texture.class);
 
-
         manager.load("player/buff/powerup_heal.png", Texture.class);
         manager.load("player/buff/powerup_shield.png", Texture.class);
         manager.load("player/buff/powerup_oneshot.png", Texture.class);
 
-        // Игрок
+        // Загрузка фона меню
+        manager.load("Screen/MenuBackground.jpg", Texture.class);
+
         for (int i = 1; i <= 2; i++) manager.load("player/idle/idle" + i + ".png", Texture.class);
         for (int i = 1; i <= 6; i++) manager.load("player/walk/walk" + i + ".png", Texture.class);
         for (int i = 1; i <= 5; i++) manager.load("player/attack/attack" + i + ".png", Texture.class);
         for (int i = 1; i <= 5; i++) manager.load("player/death/death" + i + ".png", Texture.class);
 
-        // Зомби
         for (int i = 1; i <= 4; i++) manager.load("zombie/idle/idle" + i + ".png", Texture.class);
         for (int i = 1; i <= 4; i++) manager.load("zombie/walk/walk" + i + ".png", Texture.class);
         for (int i = 1; i <= 5; i++) manager.load("zombie/attack/attack" + i + ".png", Texture.class);
@@ -60,7 +68,13 @@ public class Assets {
     }
 
     public static void setup() {
-        // Окружение
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/uvKits.ttf"));
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter.size = 24;
+        parameter.characters = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхЦчшщъыьэюя1234567890: -_!?";
+        mainFont = generator.generateFont(parameter);
+        generator.dispose();
+
         floorDefault = new TextureRegion(manager.get("level/floor/floor_default.png", Texture.class));
         floorDetails.add(new TextureRegion(manager.get("level/floor/floor1.png", Texture.class)));
         floorDetails.add(new TextureRegion(manager.get("level/floor/floor2.png", Texture.class)));
@@ -75,18 +89,18 @@ public class Assets {
         emptyHeart = new TextureRegion(manager.get("player/hearts/null.png", Texture.class));
         extraHeart = new TextureRegion(manager.get("player/hearts/extrahealth.png", Texture.class));
 
-        // Исправленный блок
         powerupHeal = new TextureRegion(manager.get("player/buff/powerup_heal.png", Texture.class));
         powerupShield = new TextureRegion(manager.get("player/buff/powerup_shield.png", Texture.class));
         powerupOneShot = new TextureRegion(manager.get("player/buff/powerup_oneshot.png", Texture.class));
 
-        // Анимации Игрока
+        // Получение фона
+        menuBackground = manager.get("Screen/MenuBackground.jpg", Texture.class);
+
         playerIdle = new Animation<>(0.3f, getFrames("player/idle/idle", 2), Animation.PlayMode.LOOP);
         playerWalk = new Animation<>(0.1f, getFrames("player/walk/walk", 6), Animation.PlayMode.LOOP);
         playerAttack = new Animation<>(0.07f, getFrames("player/attack/attack", 5), Animation.PlayMode.NORMAL);
         playerDeath = new Animation<>(0.25f, getFrames("player/death/death", 5), Animation.PlayMode.NORMAL);
 
-        // Анимации Зомби
         zombieIdle = new Animation<>(0.2f, getFrames("zombie/idle/idle", 4), Animation.PlayMode.LOOP);
         zombieWalk = new Animation<>(0.15f, getFrames("zombie/walk/walk", 4), Animation.PlayMode.LOOP);
         zombieAttack = new Animation<>(0.15f, getFrames("zombie/attack/attack", 5), Animation.PlayMode.LOOP);
@@ -102,6 +116,7 @@ public class Assets {
     }
 
     public static void dispose() {
+        if (mainFont != null) mainFont.dispose();
         manager.dispose();
     }
 }

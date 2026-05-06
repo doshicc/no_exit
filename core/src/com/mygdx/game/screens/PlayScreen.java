@@ -3,16 +3,22 @@ package com.mygdx.game.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.mygdx.game.Assets;
 import com.mygdx.game.B2DVars;
 import com.mygdx.game.MyGdxGame;
@@ -26,6 +32,7 @@ import com.mygdx.game.data.RoomData;
 import com.mygdx.game.managers.AttackListener;
 
 public class PlayScreen implements Screen {
+    private final MyGdxGame game;
     private final SpriteBatch batch;
     private World world;
     private OrthographicCamera cam;
@@ -41,6 +48,9 @@ public class PlayScreen implements Screen {
     private float roomW = 1280f, roomH = 720f, corridorGap = 350f, tileSize = 64f;
     private boolean roomCleared = false;
 
+    private int roomsClearedCount = 0;
+    private float sessionTimeSeconds = 0f;
+
     private OrthographicCamera uiCam;
 
     private TextureRegion uiFullHeart;
@@ -49,7 +59,11 @@ public class PlayScreen implements Screen {
 
     private float oneShotTimer = 0f;
 
+    private Stage stageUI;
+    private Skin skin;
+
     public PlayScreen(MyGdxGame game) {
+        this.game = game;
         this.batch = game.batch;
     }
 
@@ -78,15 +92,58 @@ public class PlayScreen implements Screen {
         uiExtraHeart = Assets.extraHeart;
 
         spawnZombies(currentRoom);
+
+        stageUI = new Stage(new ScreenViewport());
+
+        com.badlogic.gdx.InputMultiplexer multiplexer = new com.badlogic.gdx.InputMultiplexer();
+        multiplexer.addProcessor(stageUI);
+        Gdx.input.setInputProcessor(multiplexer);
+
+        createSkin();
+        createUI();
+    }
+
+    private void createSkin() {
+        skin = new Skin();
+        skin.add("default", Assets.mainFont);
+
+        TextButton.TextButtonStyle style = new TextButton.TextButtonStyle();
+        style.font = skin.getFont("default");
+        style.fontColor = Color.WHITE;
+        style.downFontColor = Color.ORANGE;
+        style.overFontColor = Color.CYAN;
+        skin.add("default", style);
+    }
+
+    private void createUI() {
+        TextButton menuButton = new TextButton("MENU", skin);
+
+        float btnWidth = 120f;
+        float btnHeight = 50f;
+
+        menuButton.setPosition(Gdx.graphics.getWidth() - btnWidth - 20f, Gdx.graphics.getHeight() - btnHeight - 20f);
+        menuButton.setSize(btnWidth, btnHeight);
+
+        menuButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                game.setScreen(new MenuScreen(game));
+                dispose();
+            }
+        });
+
+        stageUI.addActor(menuButton);
     }
 
     @Override
     public void render(float delta) {
         update(delta);
 
-        Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1);
+        // Очистка экрана
+        Gdx.gl.glClearColor(0.15f, 0.15f, 0.15f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        cam.update();
         batch.setProjectionMatrix(cam.combined);
         batch.begin();
 
@@ -99,7 +156,7 @@ public class PlayScreen implements Screen {
 
         if (!roomCleared) {
             batch.setColor(0, 0, 0, 0.8f);
-            batch.draw(Assets.leftRightWall, currentRoom.position.x + roomW - tileSize, roomH/2 - tileSize, tileSize, tileSize*3);
+            batch.draw(Assets.leftRightWall, currentRoom.position.x + roomW - tileSize, roomH / 2 - tileSize, tileSize, tileSize * 3);
             batch.setColor(1, 1, 1, 1f);
         }
 
@@ -109,35 +166,39 @@ public class PlayScreen implements Screen {
 
         batch.end();
 
-        // Отрисовка наводки атаки (код возвращён в классе Player.java)
         player.drawDebugAttack(cam.combined);
 
+        // Отрисовка UI
         batch.setProjectionMatrix(uiCam.combined);
         batch.begin();
 
-        int currentLives = player.getLives();
-        int maxLives = player.getMaxLives();
-        boolean hasExtra = player.hasExtraLife();
-
-        float heartSize = 32f; // Единый размер для всех сердечек
+        float heartSize = 32f;
         float startX = 20f;
         float startY = Gdx.graphics.getHeight() - heartSize - 20f;
         float gap = 40f;
 
-        for (int i = 0; i < maxLives; i++) {
-            if (i < currentLives) {
+        for (int i = 0; i < player.getMaxLives(); i++) {
+            if (i < player.getLives()) {
                 batch.draw(uiFullHeart, startX + (i * gap), startY, heartSize, heartSize);
             } else {
                 batch.draw(uiEmptyHeart, startX + (i * gap), startY, heartSize, heartSize);
             }
         }
 
-        if (hasExtra) {
-            // Теперь extraHeart рисуется с тем же размером 32f, что и обычные
+        if (player.hasExtraLife()) {
             batch.draw(uiExtraHeart, startX + (3 * gap), startY, heartSize, heartSize);
         }
 
+        Assets.mainFont.draw(batch, "Комнаты: " + roomsClearedCount, Gdx.graphics.getWidth() / 2f - 60f, Gdx.graphics.getHeight() - 20f);
+
+        int minutes = (int) (sessionTimeSeconds / 60);
+        int seconds = (int) (sessionTimeSeconds % 60);
+        Assets.mainFont.draw(batch, String.format("Session Time: %02d:%02d", minutes, seconds), Gdx.graphics.getWidth() / 2f - 60f, Gdx.graphics.getHeight() - 45f);
+
         batch.end();
+
+        stageUI.act(delta);
+        stageUI.draw();
     }
 
     private void drawCorridor() {
@@ -155,7 +216,8 @@ public class PlayScreen implements Screen {
     }
 
     private void update(float dt) {
-        world.step(1/60f, 6, 2);
+        world.step(1 / 60f, 6, 2);
+        sessionSecondsUpdate(dt);
 
         if (oneShotTimer > 0) {
             oneShotTimer -= dt;
@@ -175,21 +237,23 @@ public class PlayScreen implements Screen {
 
                 if (!z.isDead) anyAlive = true;
             }
-            if (!anyAlive) roomCleared = true;
+            if (!anyAlive) {
+                roomCleared = true;
+                powerUps.clear();
+                roomsClearedCount++;
+            }
         }
 
         if (roomCleared && nextRoom == null) {
             float nx = currentRoom.position.x + roomW + corridorGap;
-            nextRoom = levelManager.createRoom(nx, 0, roomW, roomH, false);
+            nextRoom = levelManager.createRoom(nx, 0f, roomW, roomH, false);
             spawnZombies(nextRoom);
             createCorridorPhysics();
         }
 
         if (nextRoom != null) {
             float playerX = player.body.getPosition().x * B2DVars.PPM;
-            if (playerX > nextRoom.position.x + 128) {
-                bodyFactory.createRect(nextRoom.position.x + tileSize/2, roomH/2, tileSize, tileSize*2, true, 0, 0, "wall_side");
-
+            if (playerX > nextRoom.position.x + 64f) { // Исправлена проверка триггера перехода
                 cleanupZombies();
                 currentRoom.destroy(world);
                 currentRoom = nextRoom;
@@ -201,11 +265,9 @@ public class PlayScreen implements Screen {
         handleInput(dt);
 
         Vector2 playerPos = player.body.getPosition().cpy().scl(B2DVars.PPM);
-
         for (int i = powerUps.size - 1; i >= 0; i--) {
             PowerUp p = powerUps.get(i);
             p.update(dt);
-
             if (playerPos.dst(p.basePosition) < 40f) {
                 applyPowerUp(p);
                 powerUps.removeIndex(i);
@@ -219,11 +281,14 @@ public class PlayScreen implements Screen {
         cam.update();
     }
 
+    private void sessionSecondsUpdate(float dt) {
+        sessionTimeSeconds += dt;
+    }
+
     private void applyPowerUp(PowerUp p) {
         switch (p.type) {
             case HEAL:
                 player.heal();
-                Gdx.app.log("POWERUP", "Здоровье восстановлено!");
                 break;
             case SHIELD:
                 player.addExtraLife();
@@ -235,7 +300,6 @@ public class PlayScreen implements Screen {
                         z.takeDamage(10);
                     }
                 }
-                Gdx.app.log("POWERUP", "Супер-баф: Уничтожение всех зомби!");
                 break;
         }
     }
@@ -246,8 +310,8 @@ public class PlayScreen implements Screen {
         float yBottom = roomH / 2 - tileSize;
         float yTop = roomH / 2 + tileSize + tileSize;
 
-        currentRoom.bodies.add(bodyFactory.createRect(startX + (endX - startX)/2, yBottom - 5, (endX-startX), 10, true, 0, 0, "wall_low"));
-        currentRoom.bodies.add(bodyFactory.createRect(startX + (endX - startX)/2, yTop + 5, (endX-startX), 10, true, 0, 0, "wall_up"));
+        currentRoom.bodies.add(bodyFactory.createRect(startX + (endX - startX) / 2, yBottom - 5, (endX - startX), 10, true, 0, 0, "wall_low"));
+        currentRoom.bodies.add(bodyFactory.createRect(startX + (endX - startX) / 2, yTop + 5, (endX - startX), 10, true, 0, 0, "wall_up"));
     }
 
     private void spawnZombies(RoomData room) {
@@ -257,7 +321,6 @@ public class PlayScreen implements Screen {
         for (int i = 0; i < numberOfZombies; i++) {
             float randomX = room.position.x + MathUtils.random(padding, roomW - padding);
             float randomY = room.position.y + MathUtils.random(padding, roomH - padding);
-
             zombies.add(new EnemyZombie(world, randomX, randomY));
         }
     }
@@ -284,7 +347,6 @@ public class PlayScreen implements Screen {
     private void handleCombat() {
         for (EnemyZombie z : zombies) {
             if (z.isDead) continue;
-
             Vector2 toZ = z.body.getPosition().cpy().sub(player.body.getPosition());
 
             if (toZ.len() < player.getAttackRadius()) {
@@ -319,12 +381,24 @@ public class PlayScreen implements Screen {
         powerUps.clear();
     }
 
-    @Override public void resize(int width, int height) { cam.setToOrtho(false, width, height); }
+    @Override
+    public void resize(int width, int height) {
+        cam.setToOrtho(false, width, height);
+        UIResize(width, height);
+    }
+
+    private void UIResize(int w, int h) {
+        stageUI.getViewport().update(w, h, true);
+    }
+
     @Override public void pause() {}
     @Override public void resume() {}
     @Override public void hide() {}
-    @Override public void dispose() {
+
+    @Override
+    public void dispose() {
         world.dispose();
         player.dispose();
+        if (stageUI != null) stageUI.dispose();
     }
 }
