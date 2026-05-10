@@ -28,6 +28,9 @@ public class Assets {
     // Бафы
     public static TextureRegion powerupHeal, powerupShield, powerupOneShot;
 
+    // UI Джойстики
+    public static TextureRegion joystickBg, joystickKnob;
+
     // Шрифты
     public static BitmapFont mainFont;
 
@@ -53,7 +56,10 @@ public class Assets {
         manager.load("player/buff/powerup_shield.png", Texture.class);
         manager.load("player/buff/powerup_oneshot.png", Texture.class);
 
-        // Загрузка фона меню
+        // Загрузка джойстиков
+        manager.load("player/joystick/joystick_bg.png", Texture.class);
+        manager.load("player/joystick/joystick_knob.png", Texture.class);
+
         manager.load("Screen/MenuBackground.jpg", Texture.class);
 
         for (int i = 1; i <= 2; i++) manager.load("player/idle/idle" + i + ".png", Texture.class);
@@ -93,7 +99,10 @@ public class Assets {
         powerupShield = new TextureRegion(manager.get("player/buff/powerup_shield.png", Texture.class));
         powerupOneShot = new TextureRegion(manager.get("player/buff/powerup_oneshot.png", Texture.class));
 
-        // Получение фона
+        // Настройка джойстиков
+        joystickBg = new TextureRegion(manager.get("player/joystick/joystick_bg.png", Texture.class));
+        joystickKnob = new TextureRegion(manager.get("player/joystick/joystick_knob.png", Texture.class));
+
         menuBackground = manager.get("Screen/MenuBackground.jpg", Texture.class);
 
         playerIdle = new Animation<>(0.3f, getFrames("player/idle/idle", 2), Animation.PlayMode.LOOP);
