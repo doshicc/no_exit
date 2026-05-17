@@ -40,17 +40,14 @@ public class LevelManager {
             }
         }
 
-        // Декор с уменьшенными хитбоксами
         int objectsCount = MathUtils.random(5, 10);
         for (int i = 0; i < objectsCount; i++) {
             float ox = offsetX + MathUtils.random(tileSize * 2, width - tileSize * 2);
             float oy = offsetY + MathUtils.random(tileSize * 2, height - tileSize * 2);
 
             if (MathUtils.randomBoolean()) {
-                // Коробка: визуально 40x40, хитбокс 25x25 (центрирован)
                 room.bodies.add(bodyFactory.createRect(ox, oy, 25, 25, true, 0, 0, "box"));
             } else {
-                // Полка: визуально 96x64, хитбокс 80x25 (только основание)
                 room.bodies.add(bodyFactory.createRect(ox, oy, 80, 25, true, 0, 0, "shelf"));
             }
         }

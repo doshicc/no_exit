@@ -18,7 +18,6 @@ public class Player {
     private EntityState currentState = EntityState.IDLE;
     private final Vector2 lookDirection = new Vector2(1, 0);
 
-    // ПЕРЕМЕННАЯ ДЛЯ ПРИЦЕЛИВАНИЯ
     private boolean isAiming = false;
 
     private final ShapeRenderer shapeRenderer;
@@ -81,7 +80,6 @@ public class Player {
         }
     }
 
-    // СЕТТЕР ДЛЯ ПРИЦЕЛИВАНИЯ (нужен для PlayScreen)
     public void setAiming(boolean aiming) {
         this.isAiming = aiming;
     }
@@ -158,7 +156,6 @@ public class Player {
     }
 
     public void drawDebugAttack(Matrix4 projMatrix) {
-        // ТЕПЕРЬ РИСУЕМ ТОЛЬКО ЕСЛИ ИГРОК ЦЕЛИТСЯ (isAiming == true)
         if (isDead || !isAiming) return;
 
         Vector2 playerPosPx = body.getPosition().cpy().scl(B2DVars.PPM);

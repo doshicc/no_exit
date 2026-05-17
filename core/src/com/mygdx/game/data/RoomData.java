@@ -9,7 +9,7 @@ public class RoomData {
     public Vector2 position;
     public float width, height;
     public Array<Body> bodies = new Array<>();
-    public Array<Body> shelfBodies = new Array<>(); // Добавили для полок
+    public Array<Body> shelfBodies = new Array<>();
     public int[][] floorMap;
 
     public RoomData(float x, float y, float w, float h) {
@@ -23,7 +23,7 @@ public class RoomData {
             if (b != null) world.destroyBody(b);
         }
         bodies.clear();
-        shelfBodies.clear(); // Чистим список полок
+        shelfBodies.clear();
         floorMap = null;
     }
 }

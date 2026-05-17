@@ -8,6 +8,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.mygdx.game.Assets;
 import com.mygdx.game.B2DVars;
+import com.mygdx.game.Settings;
 import com.mygdx.game.enums.EntityState;
 
 public class EnemyZombie {
@@ -24,7 +25,7 @@ public class EnemyZombie {
 
     private float hitStunTimer = 0f;
     private PowerUp droppedPowerUp = null;
-    private boolean hasRolledPowerUp = false; // Флаг: бросок уже сделан
+    private boolean hasRolledPowerUp = false;
 
     public EnemyZombie(World world, float x, float y) {
         createPhysics(world, x, y);
@@ -88,6 +89,11 @@ public class EnemyZombie {
         } else {
             if (dist < 1.8f && cooldownTimer >= attackCooldown) {
                 setState(EntityState.ATTACK);
+
+                if (Assets.zombieSound != null && Settings.soundZombieEnabled) {
+                    Assets.zombieSound.play(0.4f);
+                }
+
                 cooldownTimer = 0f;
                 body.setLinearVelocity(toPlayer.nor().scl(0.9f));
             } else if (dist < 8.0f) {
@@ -131,14 +137,12 @@ public class EnemyZombie {
     }
 
     public PowerUp trySpawnPowerUp() {
-        // Если уже делали попытку, сразу выходим
         if (hasRolledPowerUp) {
             return null;
         }
 
-        hasRolledPowerUp = true; // Отмечаем, что розыгрыш произошел
+        hasRolledPowerUp = true;
 
-        // Шанс 2%
         if (MathUtils.random() <= 0.15f) {
             float posX = (body != null ? body.getPosition().x : 0f) * B2DVars.PPM;
             float posY = (body != null ? body.getPosition().y : 0f) * B2DVars.PPM;

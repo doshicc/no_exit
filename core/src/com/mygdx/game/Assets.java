@@ -2,6 +2,8 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -37,6 +39,16 @@ public class Assets {
     // ФОН МЕНЮ
     public static Texture menuBackground;
 
+    // --- ЗВУКИ И МУЗЫКА ---
+    public static Sound hitSound;
+    public static Sound powerupSound;
+    public static Sound stepsSound;
+    public static Sound zombieSound;
+
+    // Твоя фоновая музыка для меню (загружаем как Music)
+    public static Music menuSound;
+    public static Array<Music> gameTracks = new Array<>();
+
     public static void load() {
         manager.load("level/floor/floor_default.png", Texture.class);
         manager.load("level/floor/floor1.png", Texture.class);
@@ -60,7 +72,7 @@ public class Assets {
         manager.load("player/joystick/joystick_bg.png", Texture.class);
         manager.load("player/joystick/joystick_knob.png", Texture.class);
 
-        manager.load("Screen/MenuBackground.jpg", Texture.class);
+        manager.load("Screen/MenuBackground.png", Texture.class);
 
         for (int i = 1; i <= 2; i++) manager.load("player/idle/idle" + i + ".png", Texture.class);
         for (int i = 1; i <= 6; i++) manager.load("player/walk/walk" + i + ".png", Texture.class);
@@ -71,6 +83,19 @@ public class Assets {
         for (int i = 1; i <= 4; i++) manager.load("zombie/walk/walk" + i + ".png", Texture.class);
         for (int i = 1; i <= 5; i++) manager.load("zombie/attack/attack" + i + ".png", Texture.class);
         for (int i = 1; i <= 3; i++) manager.load("zombie/death/death" + i + ".png", Texture.class);
+
+        // --- ЗАГРУЗКА АУДИО ФАЙЛОВ ---
+        manager.load("sounds/hit.mp3", Sound.class);
+        manager.load("sounds/powerup.mp3", Sound.class);
+        manager.load("sounds/zombie.mp3", Sound.class);
+
+        // Загружаем фон меню как Music
+        manager.load("sounds/menuSound.mp3", Music.class);
+
+        manager.load("sounds/track1.mp3", Music.class);
+        manager.load("sounds/track2.mp3", Music.class);
+        manager.load("sounds/track3.mp3", Music.class);
+        manager.load("sounds/track4.mp3", Music.class);
     }
 
     public static void setup() {
@@ -103,7 +128,7 @@ public class Assets {
         joystickBg = new TextureRegion(manager.get("player/joystick/joystick_bg.png", Texture.class));
         joystickKnob = new TextureRegion(manager.get("player/joystick/joystick_knob.png", Texture.class));
 
-        menuBackground = manager.get("Screen/MenuBackground.jpg", Texture.class);
+        menuBackground = manager.get("Screen/MenuBackground.png", Texture.class);
 
         playerIdle = new Animation<>(0.3f, getFrames("player/idle/idle", 2), Animation.PlayMode.LOOP);
         playerWalk = new Animation<>(0.1f, getFrames("player/walk/walk", 6), Animation.PlayMode.LOOP);
@@ -114,6 +139,19 @@ public class Assets {
         zombieWalk = new Animation<>(0.15f, getFrames("zombie/walk/walk", 4), Animation.PlayMode.LOOP);
         zombieAttack = new Animation<>(0.15f, getFrames("zombie/attack/attack", 5), Animation.PlayMode.LOOP);
         zombieDeath = new Animation<>(0.25f, getFrames("zombie/death/death", 3), Animation.PlayMode.NORMAL);
+
+        // --- ИНИЦИАЛИЗАЦИЯ АУДИО ---
+        hitSound = manager.get("sounds/hit.mp3", Sound.class);
+        powerupSound = manager.get("sounds/powerup.mp3", Sound.class);
+        zombieSound = manager.get("sounds/zombie.mp3", Sound.class);
+
+        menuSound = manager.get("sounds/menuSound.mp3", Music.class);
+
+        gameTracks.clear();
+        gameTracks.add(manager.get("sounds/track1.mp3", Music.class));
+        gameTracks.add(manager.get("sounds/track2.mp3", Music.class));
+        gameTracks.add(manager.get("sounds/track3.mp3", Music.class));
+        gameTracks.add(manager.get("sounds/track4.mp3", Music.class));
     }
 
     private static Array<TextureRegion> getFrames(String path, int count) {

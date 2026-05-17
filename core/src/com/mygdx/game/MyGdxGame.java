@@ -8,7 +8,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.mygdx.game.screens.MenuScreen; // или PlayScreen, если вы хотите сразу запускать его
+import com.mygdx.game.screens.MenuScreen;
 
 public class MyGdxGame extends Game {
     public SpriteBatch batch;
@@ -32,7 +32,6 @@ public class MyGdxGame extends Game {
         Assets.manager.finishLoading();
         Assets.setup();
 
-        // 2. Гарантированно создаем шрифт, если он не был создан в Assets
         if (Assets.mainFont == null) {
             FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/uvKits.ttf"));
             FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
@@ -43,7 +42,6 @@ public class MyGdxGame extends Game {
             generator.dispose();
         }
 
-        // 3. Открываем главное меню (если нужно сразу PlayScreen, замените на new PlayScreen(this))
         setScreen(new MenuScreen(this));
     }
 
@@ -56,14 +54,12 @@ public class MyGdxGame extends Game {
 
     @Override
     public void render() {
-        // Очищаем экран общим цветом, чтобы не было серых/черных артефактов
         Gdx.gl.glClearColor(0.15f, 0.15f, 0.15f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         camera.update();
         batch.setProjectionMatrix(camera.combined);
 
-        // Вызываем метод render() активного экрана
         super.render();
     }
 

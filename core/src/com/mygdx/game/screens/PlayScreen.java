@@ -3,6 +3,7 @@ package com.mygdx.game.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -26,6 +27,7 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.mygdx.game.Assets;
 import com.mygdx.game.B2DVars;
 import com.mygdx.game.MyGdxGame;
+import com.mygdx.game.Settings;
 import com.mygdx.game.managers.BodyFactory;
 import com.mygdx.game.managers.LevelManager;
 import com.mygdx.game.renderers.LevelRenderer;
@@ -62,11 +64,13 @@ public class PlayScreen implements Screen {
     private Skin skin;
     private Touchpad moveTouchpad, aimTouchpad;
 
-    // Новые элементы для экрана смерти
     private Table gameOverTable;
     private boolean isGameOver = false;
 
     private boolean wasAimingLastFrame = false;
+
+    private int currentTrackIndex = 0;
+    private Music currentMusic = null;
 
     public PlayScreen(MyGdxGame game) {
         this.game = game;
@@ -103,6 +107,17 @@ public class PlayScreen implements Screen {
         createSkin();
         createUI();
         spawnZombies(currentRoom);
+
+        if (Assets.gameTracks.size > 0 && Settings.musicGameEnabled) {
+            try {
+                currentTrackIndex = MathUtils.random(0, Assets.gameTracks.size - 1);
+                currentMusic = Assets.gameTracks.get(currentTrackIndex);
+                currentMusic.setVolume(0.4f);
+                currentMusic.play();
+            } catch (Exception e) {
+                Gdx.app.log("AUDIO", "Ошибка запуска музыки: " + e.getMessage());
+            }
+        }
     }
 
     private void createSkin() {
@@ -140,11 +155,14 @@ public class PlayScreen implements Screen {
         menuButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                if (Assets.menuSound != null && Settings.musicMenuEnabled) Assets.menuSound.play();
+                if (currentMusic != null) {
+                    try { currentMusic.stop(); } catch (Exception ignored) {}
+                }
                 game.setScreen(new MenuScreen(game));
             }
         });
-        topTable.add(menuButton).size(80, 30).expand().top().right().pad(10);
-
+        topTable.add(menuButton).size(100, 40).expand().top().right().pad(10);
 
         Touchpad.TouchpadStyle touchStyle = new Touchpad.TouchpadStyle();
         touchStyle.background = new TextureRegionDrawable(Assets.joystickBg);
@@ -158,20 +176,23 @@ public class PlayScreen implements Screen {
         aimTouchpad.setBounds(Gdx.graphics.getWidth() - 250, 50, 200, 200);
         stageUI.addActor(aimTouchpad);
 
-
         gameOverTable = new Table();
         gameOverTable.setFillParent(true);
         gameOverTable.setVisible(false);
-        gameOverTable.setBackground(skin.newDrawable("white_pixel", new Color(0, 0, 0, 0.6f)));
+        gameOverTable.setBackground(skin.newDrawable("white_pixel", new Color(0, 0, 0, 0.7f)));
         stageUI.addActor(gameOverTable);
 
-        Label dieLabel = new Label("ТЫ УМЕР!", skin, "dieStyle");
+        Label dieLabel = new Label("ВЫ ПОГИБЛИ!", skin, "dieStyle");
         TextButton restartBtn = new TextButton("Играть снова", skin);
-        TextButton backToMenuBtn = new TextButton("Меню", skin);
+        TextButton backToMenuBtn = new TextButton("Выйти в меню", skin);
 
         restartBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                if (Assets.menuSound != null && Settings.musicMenuEnabled) Assets.menuSound.play();
+                if (currentMusic != null) {
+                    try { currentMusic.stop(); } catch (Exception ignored) {}
+                }
                 game.setScreen(new PlayScreen(game));
             }
         });
@@ -179,13 +200,17 @@ public class PlayScreen implements Screen {
         backToMenuBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                if (Assets.menuSound != null && Settings.musicMenuEnabled) Assets.menuSound.play();
+                if (currentMusic != null) {
+                    try { currentMusic.stop(); } catch (Exception ignored) {}
+                }
                 game.setScreen(new MenuScreen(game));
             }
         });
 
         gameOverTable.add(dieLabel).padBottom(40).row();
-        gameOverTable.add(restartBtn).size(200, 50).padBottom(15).row();
-        gameOverTable.add(backToMenuBtn).size(200, 50);
+        gameOverTable.add(restartBtn).size(250, 60).padBottom(15).row();
+        gameOverTable.add(backToMenuBtn).size(250, 60);
     }
 
     private void handleInput(float dt) {
@@ -232,6 +257,11 @@ public class PlayScreen implements Screen {
 
                 if (angleDeg < player.getAttackAngleRange() / 2f) {
                     z.takeDamage(1);
+
+                    if (Assets.hitSound != null && Settings.soundHitEnabled) {
+                        Assets.hitSound.play(0.8f);
+                    }
+
                     z.applyStun(0.3f);
                     z.body.setLinearVelocity(toZ.cpy().nor().scl(6f));
                 }
@@ -284,7 +314,7 @@ public class PlayScreen implements Screen {
         Assets.mainFont.draw(batch, "Комнаты: " + roomsClearedCount, Gdx.graphics.getWidth() / 2f - 60f, Gdx.graphics.getHeight() - 20f);
         int minutes = (int) (sessionTimeSeconds / 60);
         int seconds = (int) (sessionTimeSeconds % 60);
-        Assets.mainFont.draw(batch, String.format("Time: %02d:%02d", minutes, seconds), Gdx.graphics.getWidth() / 2f - 60f, Gdx.graphics.getHeight() - 45f);
+        Assets.mainFont.draw(batch, String.format("Время: %02d:%02d", minutes, seconds), Gdx.graphics.getWidth() / 2f - 60f, Gdx.graphics.getHeight() - 45f);
     }
 
     private void update(float dt) {
@@ -293,6 +323,21 @@ public class PlayScreen implements Screen {
             sessionTimeSeconds += dt;
             if (oneShotTimer > 0) oneShotTimer -= dt;
 
+            if (Settings.musicGameEnabled) {
+                if (currentMusic != null && !currentMusic.isPlaying()) {
+                    try {
+                        currentTrackIndex = (currentTrackIndex + 1) % Assets.gameTracks.size;
+                        currentMusic = Assets.gameTracks.get(currentTrackIndex);
+                        currentMusic.setVolume(0.4f);
+                        currentMusic.play();
+                    } catch (Exception ignored) {}
+                }
+            } else {
+                if (currentMusic != null && currentMusic.isPlaying()) {
+                    try { currentMusic.stop(); } catch (Exception ignored) {}
+                }
+            }
+
             handleRoomLogic();
             handleInput(dt);
             player.update(dt);
@@ -300,9 +345,11 @@ public class PlayScreen implements Screen {
 
             for (EnemyZombie z : zombies) z.update(dt, player.body.getPosition(), player);
 
-            // ПРОВЕРКА СМЕРТИ
             if (player.getLives() <= 0) {
                 isGameOver = true;
+                if (currentMusic != null) {
+                    try { currentMusic.stop(); } catch (Exception ignored) {}
+                }
                 gameOverTable.setVisible(true);
                 moveTouchpad.setVisible(false);
                 aimTouchpad.setVisible(false);
@@ -357,6 +404,9 @@ public class PlayScreen implements Screen {
     }
 
     private void applyPowerUp(PowerUp p) {
+        if (Assets.powerupSound != null && Settings.soundHitEnabled) {
+            Assets.powerupSound.play(0.7f);
+        }
         switch (p.type) {
             case HEAL: player.heal(); break;
             case SHIELD: player.addExtraLife(); break;
@@ -383,7 +433,7 @@ public class PlayScreen implements Screen {
     }
 
     private void spawnZombies(RoomData room) {
-        int num = MathUtils.random(4, 7);
+        int num = MathUtils.random(5, 11);
         for (int i = 0; i < num; i++) {
             zombies.add(new EnemyZombie(world, room.position.x + MathUtils.random(100, roomW - 100), room.position.y + MathUtils.random(100, roomH - 100)));
         }
@@ -403,6 +453,18 @@ public class PlayScreen implements Screen {
     @Override public void resize(int width, int height) { cam.setToOrtho(false, width, height); stageUI.getViewport().update(width, height, true); }
     @Override public void pause() {}
     @Override public void resume() {}
-    @Override public void hide() {}
-    @Override public void dispose() { world.dispose(); player.dispose(); if (stageUI != null) stageUI.dispose(); }
+    @Override public void hide() {
+        if (currentMusic != null) {
+            try { currentMusic.stop(); } catch (Exception ignored) {}
+        }
+    }
+
+    @Override public void dispose() {
+        if (currentMusic != null) {
+            try { currentMusic.stop(); } catch (Exception ignored) {}
+        }
+        world.dispose();
+        player.dispose();
+        if (stageUI != null) stageUI.dispose();
+    }
 }

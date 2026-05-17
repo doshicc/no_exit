@@ -11,10 +11,8 @@ public class LevelRenderer {
     private final float tileSize = 64f;
 
     public void render(SpriteBatch batch, RoomData room) {
-        // 1. Сначала рисуем пол (нижний слой)
         drawFloor(batch, room);
 
-        // 2. Затем рисуем объекты (стены, полки, коробки)
         drawObjects(batch, room);
     }
 
@@ -31,7 +29,6 @@ public class LevelRenderer {
                     tile = Assets.floorDefault;
                 }
 
-                // Рисуем плитку пола
                 batch.draw(tile,
                         room.position.x + x * tileSize,
                         room.position.y + y * tileSize,
@@ -45,15 +42,11 @@ public class LevelRenderer {
             String type = (String) b.getUserData();
             if (type == null) continue;
 
-            // Получаем позицию тела в пикселях (центр тела)
             float x = b.getPosition().x * B2DVars.PPM;
             float y = b.getPosition().y * B2DVars.PPM;
 
             switch (type) {
                 case "shelf":
-                    // Хитбокс у нас 80x25, но спрайт 96x64.
-                    // Смещаем на половину ширины/высоты СПРАЙТА (96/2=48, 64/2=32),
-                    // чтобы он рисовался ровно по центру физического тела.
                     batch.draw(Assets.shelf, x - 48, y - 32, 96, 64);
                     break;
 

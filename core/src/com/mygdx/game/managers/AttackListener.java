@@ -27,21 +27,18 @@ public class AttackListener implements ContactListener {
         Object dataA = fa.getUserData();
         Object dataB = fb.getUserData();
 
-        // Проверяем, участвует ли игрок в столкновении
         boolean isPlayerA = "player".equals(dataA) || (fa.getBody().getUserData() instanceof Player);
         boolean isPlayerB = "player".equals(dataB) || (fb.getBody().getUserData() instanceof Player);
 
         if (isPlayerA || isPlayerB) {
             EnemyZombie zombie = null;
 
-            // Пытаемся найти объект EnemyZombie из userData у тел (Body)
             if (fa.getBody().getUserData() instanceof EnemyZombie) {
                 zombie = (EnemyZombie) fa.getBody().getUserData();
             } else if (fb.getBody().getUserData() instanceof EnemyZombie) {
                 zombie = (EnemyZombie) fb.getBody().getUserData();
             }
 
-            // Если зомби существует и мертв (isDead == true), игнорируем урон
             if (zombie != null && zombie.isDead) {
                 return;
             }
