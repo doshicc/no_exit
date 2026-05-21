@@ -1,6 +1,13 @@
-sourceCompatibility = 1.7
-[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+apply plugin: "java-library"
 
-sourceSets.main.java.srcDirs = [ "src/" ]
+dependencies {
+    api "com.badlogicgames.gdx:gdx:$gdxVersion"
+    api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
+    api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+    api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+}
 
-eclipse.project.name = appName + "-core"
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}

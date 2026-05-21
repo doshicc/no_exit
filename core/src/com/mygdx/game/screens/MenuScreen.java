@@ -6,10 +6,13 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
@@ -25,6 +28,7 @@ public class MenuScreen implements Screen {
     private Stage stage;
     private Texture buttonUpTexture;
     private Texture buttonDownTexture;
+    private BitmapFont titleFont;
 
     public MenuScreen(final MyGdxGame game) {
         this.game = game;
@@ -78,6 +82,22 @@ public class MenuScreen implements Screen {
     }
 
     private void createUI() {
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/pobeda-bold1.ttf"));
+        FreeTypeFontGenerator.FreeTypeFontParameter titleParam = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        titleParam.size = 90;
+        titleParam.color = new Color(0.9f, 0.5f, 0.2f, 1f);
+        titleParam.borderWidth = 3f;
+        titleParam.borderColor = Color.BROWN;
+
+        titleFont = generator.generateFont(titleParam);
+        generator.dispose();
+
+        Label.LabelStyle titleStyle = new Label.LabelStyle();
+        titleStyle.font = titleFont;
+        titleStyle.fontColor = Color.WHITE;
+
+        Label titleLabel = new Label("NO EXIT", titleStyle);
+
         TextButton.TextButtonStyle style = new TextButton.TextButtonStyle();
         style.font = Assets.mainFont;
         style.fontColor = Color.WHITE;
@@ -93,6 +113,7 @@ public class MenuScreen implements Screen {
         table.setFillParent(true);
         table.center();
 
+        table.add(titleLabel).padBottom(80).padTop(50).row();
         table.add(playButton).pad(15).width(350).height(70).row();
         table.add(settingsButton).pad(15).width(350).height(70).row();
         table.add(exitButton).pad(15).width(350).height(70).row();
@@ -156,5 +177,6 @@ public class MenuScreen implements Screen {
         if (stage != null) stage.dispose();
         if (buttonUpTexture != null) buttonUpTexture.dispose();
         if (buttonDownTexture != null) buttonDownTexture.dispose();
+        if (titleFont != null) titleFont.dispose();
     }
 }
