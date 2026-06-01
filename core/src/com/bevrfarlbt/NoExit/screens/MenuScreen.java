@@ -102,12 +102,18 @@ public class MenuScreen implements Screen {
         playButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+
                 if (Assets.menuSound != null) {
                     try {
                         Assets.menuSound.stop();
                     } catch (Exception ignored) {}
                 }
-                game.setScreen(new PlayScreen(game));
+
+                if (!Settings.introWatched) {
+                    game.setScreen(new IntroScreen(game));
+                } else {
+                    game.setScreen(new PlayScreen(game));
+                }
             }
         });
 
@@ -162,7 +168,9 @@ public class MenuScreen implements Screen {
 
     @Override public void pause() {}
     @Override public void resume() {}
-    @Override public void hide() {}
+    @Override public void hide() {
+        Gdx.input.setInputProcessor(null);
+    }
 
     @Override
     public void dispose() {

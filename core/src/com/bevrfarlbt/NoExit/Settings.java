@@ -12,6 +12,7 @@ public class Settings {
     public static boolean musicGameEnabled = true;
     public static boolean soundHitEnabled = true;
     public static boolean soundZombieEnabled = true;
+    public static boolean introWatched = false;
 
     private static Preferences getPrefs() {
         if (prefs == null) {
@@ -28,6 +29,7 @@ public class Settings {
                 musicGameEnabled = p.getBoolean("musicGame", true);
                 soundHitEnabled = p.getBoolean("soundHit", true);
                 soundZombieEnabled = p.getBoolean("soundZombie", true);
+                introWatched = prefs.getBoolean("introWatched", false);
             }
         } catch (Exception e) {
             Gdx.app.log("SETTINGS", "Не удалось загрузить настройки: " + e.getMessage());
@@ -42,6 +44,7 @@ public class Settings {
                 p.putBoolean("musicGame", musicGameEnabled);
                 p.putBoolean("soundHit", soundHitEnabled);
                 p.putBoolean("soundZombie", soundZombieEnabled);
+                prefs.putBoolean("introWatched", introWatched);
                 p.flush();
             }
         } catch (Exception e) {
