@@ -41,6 +41,8 @@ import com.bevrfarlbt.NoExit.objects.Turret;
 import com.bevrfarlbt.NoExit.data.RoomData;
 import com.bevrfarlbt.NoExit.managers.AttackListener;
 import com.bevrfarlbt.NoExit.managers.ShopManager; // Импорт менеджера магазина
+import com.bevrfarlbt.NoExit.managers.TutorialManager;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 
 public class PlayScreen implements Screen {
     private final MyGdxGame game;
@@ -80,6 +82,8 @@ public class PlayScreen implements Screen {
     private int currentTrackIndex = 0;
     private Music currentMusic = null;
 
+    private GlyphLayout tutorialLayout;
+
     public PlayScreen(MyGdxGame game) {
         this.game = game;
         this.batch = game.batch;
@@ -114,6 +118,12 @@ public class PlayScreen implements Screen {
         com.badlogic.gdx.InputMultiplexer multiplexer = new com.badlogic.gdx.InputMultiplexer();
         multiplexer.addProcessor(stageUI);
         Gdx.input.setInputProcessor(multiplexer);
+
+        tutorialLayout = new GlyphLayout();
+
+        if (!Settings.tutorialCompleted) {
+            TutorialManager.reset();
+        }
 
         createSkin();
         createUI();
@@ -244,6 +254,10 @@ public class PlayScreen implements Screen {
         }
         player.handleInput(move);
 
+        if (!Settings.tutorialCompleted && TutorialManager.getCurrentStep() == TutorialManager.Step.MOVE && move.len() > 0.2f) {
+            TutorialManager.nextStep();
+        }
+
         Vector2 aim = new Vector2(aimTouchpad.getKnobPercentX(), aimTouchpad.getKnobPercentY());
         float deadzone = 0.25f;
 
@@ -345,6 +359,16 @@ public class PlayScreen implements Screen {
         // Отображаем количество монет и турелей из ShopManager
         Assets.mainFont.draw(batch, "Монеты: " + ShopManager.getCoins(), 20f, startY - 20f);
         Assets.mainFont.draw(batch, "Турели [1]: " + ShopManager.getTurretInventory(), 20f, startY - 45f);
+
+        if (!Settings.tutorialCompleted) {
+            tutorialLayout.setText(
+                    Assets.mainFont,
+                    TutorialManager.getCurrentText()
+            );
+            Assets.mainFont.draw(batch, tutorialLayout,
+                    uiViewport.getWorldWidth() - tutorialLayout.width - 40,
+                    uiViewport.getWorldHeight() - 140);
+        }
     }
 
     private void update(float dt) {
@@ -404,8 +428,18 @@ public class PlayScreen implements Screen {
             boolean anyAlive = false;
             for (EnemyZombie z : zombies) {
                 if (z.isDead && z.getPowerUp() == null) {
-                    PowerUp p = z.trySpawnPowerUp();
-                    if (p != null) powerUps.add(p);
+                    PowerUp p = null;
+                    if (!Settings.tutorialCompleted && TutorialManager.getCurrentStep() == TutorialManager.Step.KILL_ZOMBIE && !TutorialManager.hasSpawnedTutorialPowerUp()) {
+                        p = z.forceSpawnPowerUp();
+                        TutorialManager.setTutorialPowerUpSpawned(true);
+                        TutorialManager.nextStep();
+                    }
+                    else {
+                        p = z.trySpawnPowerUp();
+                    }
+                    if (p != null) {
+                        powerUps.add(p);
+                    }
                 }
                 if (!z.isDead) anyAlive = true;
             }
@@ -438,6 +472,9 @@ public class PlayScreen implements Screen {
             p.update(dt);
             if (pPos.dst(p.basePosition) < 40f) {
                 applyPowerUp(p);
+                if (!Settings.tutorialCompleted && TutorialManager.getCurrentStep() == TutorialManager.Step.PICK_POWERUP) {
+                    TutorialManager.nextStep();
+                }
                 powerUps.removeIndex(i);
             }
         }

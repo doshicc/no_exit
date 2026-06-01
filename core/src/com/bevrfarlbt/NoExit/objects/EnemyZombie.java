@@ -13,6 +13,7 @@ import com.bevrfarlbt.NoExit.B2DVars;
 import com.bevrfarlbt.NoExit.Settings;
 import com.bevrfarlbt.NoExit.enums.EntityState;
 import com.bevrfarlbt.NoExit.managers.BodyFactory;
+import com.bevrfarlbt.NoExit.managers.TutorialManager;
 
 public class EnemyZombie {
     public Body body;
@@ -189,6 +190,24 @@ public class EnemyZombie {
             return droppedPowerUp;
         }
         return null;
+    }
+
+    public PowerUp forceSpawnPowerUp() {
+
+        if (hasRolledPowerUp) return null;
+
+        hasRolledPowerUp = true;
+
+        float posX = body.getPosition().x * B2DVars.PPM;
+        float posY = body.getPosition().y * B2DVars.PPM;
+
+        droppedPowerUp = new PowerUp(
+                posX,
+                posY,
+                PowerUp.Type.HEAL
+        );
+
+        return droppedPowerUp;
     }
 
     public void setState(EntityState newState) {
