@@ -13,6 +13,7 @@ import com.bevrfarlbt.NoExit.Assets;
 import com.bevrfarlbt.NoExit.MyGdxGame;
 import com.bevrfarlbt.NoExit.Settings;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.audio.Music;
 
 public class IntroScreen implements Screen {
 
@@ -20,6 +21,7 @@ public class IntroScreen implements Screen {
     private final SpriteBatch batch;
     private OrthographicCamera camera;
     private Viewport viewport;
+    private Music introMusic;
 
     private Texture[] slides;
     private String[] slideTexts;
@@ -43,6 +45,17 @@ public class IntroScreen implements Screen {
                 MyGdxGame.SCR_HEIGHT,
                 camera
         );
+
+        introMusic = Gdx.audio.newMusic(
+                Gdx.files.internal("sounds/intro.mp3")
+        );
+
+        introMusic.setLooping(true);
+        introMusic.setVolume(0.4f);
+
+        if (Settings.musicMenuEnabled) {
+            introMusic.play();
+        }
 
         currentSlide = 0;
 
@@ -130,10 +143,18 @@ public class IntroScreen implements Screen {
     public void resume() { }
 
     @Override
-    public void hide() { }
+    public void hide() {
+        if (introMusic != null) {
+            introMusic.stop();
+        }
+    }
 
     @Override
     public void dispose() {
+        if (introMusic != null) {
+            introMusic.dispose();
+        }
+
         if (slides != null) {
             for (Texture texture : slides) {
                 if (texture != null) {
