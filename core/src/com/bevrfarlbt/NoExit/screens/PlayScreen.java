@@ -86,6 +86,7 @@ public class PlayScreen implements Screen {
     private GlyphLayout tutorialLayout;
 
     private Body exitBlocker;
+    private TextButton turretButton;
 
     public PlayScreen(MyGdxGame game) {
         this.game = game;
@@ -127,6 +128,9 @@ public class PlayScreen implements Screen {
 
         if (!Settings.tutorialCompleted) {
             TutorialManager.reset();
+            if (ShopManager.getTurretInventory() == 0) {
+                ShopManager.addTurretsToInventory(1);
+            }
         }
 
         createSkin();
@@ -212,6 +216,35 @@ public class PlayScreen implements Screen {
 
         aimTouchpad = new Touchpad(10, touchStyle);
         stageUI.addActor(aimTouchpad);
+
+        turretButton = new TextButton("Турель", skin);
+
+        turretButton.setSize(180, 70);
+
+        float buttonX = aimTouchpad.getX() + 10;
+        float buttonY = aimTouchpad.getY() + aimTouchpad.getHeight() + 20;
+
+        turretButton.setPosition(buttonX, buttonY);
+
+        turretButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (ShopManager.useTurretFromInventory()) {
+                    float pX = player.body.getPosition().x * B2DVars.PPM;
+                    float pY = player.body.getPosition().y * B2DVars.PPM;
+                    turrets.add(new Turret(pX, pY));
+
+                    if (!Settings.tutorialCompleted
+                            && TutorialManager.getCurrentStep() == TutorialManager.Step.PLACE_TURRET) {
+                        TutorialManager.nextStep();
+                        Settings.tutorialCompleted = true;
+                        Settings.save();
+                    }
+                }
+            }
+        });
+
+        stageUI.addActor(turretButton);
 
         gameOverTable = new Table();
         gameOverTable.setFillParent(true);
@@ -377,6 +410,15 @@ public class PlayScreen implements Screen {
         // Отображаем количество монет и турелей из ShopManager
         Assets.mainFont.draw(batch, "Монеты: " + ShopManager.getCoins(), 20f, startY - 20f);
         Assets.mainFont.draw(batch, "Турели [1]: " + ShopManager.getTurretInventory(), 20f, startY - 45f);
+        if (!Settings.tutorialCompleted
+                && TutorialManager.getCurrentStep() == TutorialManager.Step.PLACE_TURRET) {
+            Assets.mainFont.draw(
+                    batch,
+                    "↑ Нажмите сюда \n для установки турели",
+                    uiViewport.getWorldWidth() - 500,
+                    380
+            );
+        }
 
         if (!Settings.tutorialCompleted) {
             tutorialLayout.setText(
@@ -434,6 +476,19 @@ public class PlayScreen implements Screen {
                 moveTouchpad.setVisible(false);
                 aimTouchpad.setVisible(false);
             }
+        }
+        if (turretButton != null) {
+            turretButton.setDisabled(
+                    ShopManager.getTurretInventory() <= 0
+            );
+        }
+
+        if (turretButton != null) {
+            turretButton.setText(
+                    "Турель (" +
+                            ShopManager.getTurretInventory() +
+                            ")"
+            );
         }
 
         float camX = Math.max(player.body.getPosition().x * B2DVars.PPM, gameViewport.getWorldWidth() / 2f);
@@ -568,8 +623,18 @@ public class PlayScreen implements Screen {
         stageUI.getViewport().update(width, height, true);
 
         float uiWidth = uiViewport.getWorldWidth();
+
         moveTouchpad.setBounds(50, 50, 200, 200);
         aimTouchpad.setBounds(uiWidth - 250, 50, 200, 200);
+
+        if (turretButton != null) {
+            turretButton.setBounds(
+                    uiWidth - 240,
+                    270,
+                    180,
+                    70
+            );
+        }
     }
 
     @Override public void pause() {}
