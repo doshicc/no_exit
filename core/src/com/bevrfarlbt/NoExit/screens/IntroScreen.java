@@ -51,7 +51,7 @@ public class IntroScreen implements Screen {
         );
 
         introMusic.setLooping(true);
-        introMusic.setVolume(0.4f);
+        introMusic.setVolume(1.5f);
 
         if (Settings.musicMenuEnabled) {
             introMusic.play();

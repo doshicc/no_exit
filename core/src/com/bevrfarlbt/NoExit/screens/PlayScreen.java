@@ -43,6 +43,7 @@ import com.bevrfarlbt.NoExit.managers.AttackListener;
 import com.bevrfarlbt.NoExit.managers.ShopManager; // Импорт менеджера магазина
 import com.bevrfarlbt.NoExit.managers.TutorialManager;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.physics.box2d.Body;
 
 public class PlayScreen implements Screen {
     private final MyGdxGame game;
@@ -84,6 +85,8 @@ public class PlayScreen implements Screen {
 
     private GlyphLayout tutorialLayout;
 
+    private Body exitBlocker;
+
     public PlayScreen(MyGdxGame game) {
         this.game = game;
         this.batch = game.batch;
@@ -107,6 +110,7 @@ public class PlayScreen implements Screen {
         turrets = new Array<>();
 
         currentRoom = levelManager.createRoom(0, 0, roomW, roomH, true);
+        createExitBlocker();
         player = new Player(world, 200, roomH / 2);
         world.setContactListener(new AttackListener(player));
 
@@ -139,6 +143,20 @@ public class PlayScreen implements Screen {
                 Gdx.app.log("AUDIO", "Ошибка запуска музыки: " + e.getMessage());
             }
         }
+    }
+
+    private void createExitBlocker() {
+
+        exitBlocker = bodyFactory.createRect(
+                currentRoom.position.x + roomW - tileSize / 2f,
+                roomH / 2f,
+                tileSize,
+                tileSize * 3f,
+                true,
+                0,
+                0,
+                "exit_blocker"
+        );
     }
 
     private void createSkin() {
@@ -444,6 +462,10 @@ public class PlayScreen implements Screen {
                 if (!z.isDead) anyAlive = true;
             }
             if (!anyAlive) {
+                if (exitBlocker != null) {
+                    world.destroyBody(exitBlocker);
+                    exitBlocker = null;
+                }
                 roomCleared = true;
                 powerUps.clear();
                 roomsClearedCount++;
@@ -461,6 +483,7 @@ public class PlayScreen implements Screen {
             currentRoom = nextRoom;
             nextRoom = null;
             roomCleared = false;
+            createExitBlocker();
             turrets.clear();
         }
     }
