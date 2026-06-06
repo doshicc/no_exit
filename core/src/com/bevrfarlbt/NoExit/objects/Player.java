@@ -33,8 +33,8 @@ public class Player {
     private float damageTimer = 0f;
     public boolean isDead = false;
 
-    // Импровизация инвентаря турелей
-    private int turretCount = 3; // По умолчанию даем 3 штуки, их можно докупать в магазине
+    private int turretCount = 3;
+    private boolean faceLeft = false;
 
     public Player(World world, float x, float y) {
         createPhysics(world, x, y);
@@ -94,6 +94,9 @@ public class Player {
 
     public void handleInput(Vector2 move) {
         if (isDead) return;
+        if (Math.abs(move.x) > 0.05f) {
+            faceLeft = move.x < 0;
+        }
         body.setLinearVelocity(move.scl(3.5f));
     }
 
@@ -128,7 +131,6 @@ public class Player {
         attackTimer = 0.5f;
     }
 
-    // Методы для инвентаря турелей
     public int getTurretCount() { return turretCount; }
     public void addTurrets(int count) { this.turretCount += count; }
     public boolean useTurret() {
@@ -165,7 +167,6 @@ public class Player {
         TextureRegion frame = anim.getKeyFrame(stateTime, isLooping);
         float x = body.getPosition().x * B2DVars.PPM;
         float y = body.getPosition().y * B2DVars.PPM;
-        boolean faceLeft = lookDirection.x < 0;
         batch.draw(frame, faceLeft ? x + 32 : x - 32, y - 32, faceLeft ? -64 : 64, 64);
     }
 

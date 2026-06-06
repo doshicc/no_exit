@@ -21,7 +21,6 @@ public class EnemyZombie {
     public EntityState currentState = EntityState.IDLE;
     public boolean isDead = false;
 
-    // Характеристики
     protected int health = 3;
     protected float speed = 1.8f;
     protected float attackCooldown = 1.5f;
@@ -32,11 +31,9 @@ public class EnemyZombie {
     protected PowerUp droppedPowerUp = null;
     protected boolean hasRolledPowerUp = false;
 
-    // Таймер для покраснения при уроне
     protected float damageFlashTimer = 0f;
-    protected final float FLASH_DURATION = 0.2f; // Сколько секунд зомби будет красным
+    protected final float FLASH_DURATION = 0.2f;
 
-    // Ссылки на текущие анимации конкретного типа зомби
     protected Animation<TextureRegion> animIdle;
     protected Animation<TextureRegion> animWalk;
     protected Animation<TextureRegion> animAttack;
@@ -54,7 +51,6 @@ public class EnemyZombie {
         this.animDeath = Assets.zombieDefaultDeath;
     }
 
-    // ВАЖНО: Изменили сигнатуру метода, теперь передаем массив турелей комнаты
     public void update(float dt, Vector2 playerPos, Player player, Array<Turret> turrets) {
         if (isDead) {
             stateTime += dt;
@@ -66,7 +62,6 @@ public class EnemyZombie {
         stateTime += dt;
         cooldownTimer += dt;
 
-        // Уменьшаем таймер покраснения
         if (damageFlashTimer > 0) {
             damageFlashTimer -= dt;
         }
@@ -77,17 +72,13 @@ public class EnemyZombie {
         }
 
         Vector2 enemyPos = body.getPosition();
-
-        // --- АГРО-СИСТЕМА: Выбираем между игроком и турелями ---
         Vector2 targetPos = playerPos;
-        Object targetEntity = player; // Для нанесения урона конкретно игроку или турели
+        Object targetEntity = player;
         float minDist = enemyPos.dst(playerPos);
 
-        // Перебираем турели и ищем самую близкую
         for (Turret t : turrets) {
             if (t.isDestroyed || t.getCurrentState() == EntityState.DEATH) continue;
 
-            // Позиция турели в метрах Box2D
             Vector2 turretPosInMeters = t.getPosition().cpy().scl(1f / B2DVars.PPM);
             float distToTurret = enemyPos.dst(turretPosInMeters);
 
@@ -112,7 +103,6 @@ public class EnemyZombie {
                 body.setLinearVelocity(toTarget.nor().scl(0.9f));
 
                 if (dist < 1.8f && cooldownTimer >= attackCooldown) {
-                    // Бьем того, на кого заагрились
                     if (targetEntity instanceof Player) {
                         ((Player) targetEntity).takeDamage();
                     } else if (targetEntity instanceof Turret) {
@@ -151,7 +141,7 @@ public class EnemyZombie {
     public void takeDamage(int dmg) {
         if (isDead) return;
         health -= dmg;
-        damageFlashTimer = FLASH_DURATION; // Запускаем мигание красным
+        damageFlashTimer = FLASH_DURATION;
         if (health <= 0) die();
     }
 
@@ -241,14 +231,12 @@ public class EnemyZombie {
         float x = body != null ? (body.getPosition().x * B2DVars.PPM) : 0f;
         float y = body != null ? (body.getPosition().y * B2DVars.PPM) : 0f;
 
-        // Если активен таймер урона — красим спрайт в красный цвет
         if (damageFlashTimer > 0) {
             batch.setColor(1f, 0.3f, 0.3f, 1f);
         }
 
         batch.draw(frame, isFacingLeft ? x + 32 : x - 32, y - 32, isFacingLeft ? -64 : 64, 64);
 
-        // Обязательно возвращаем стандартный цвет отрисовки
         batch.setColor(Color.WHITE);
     }
 

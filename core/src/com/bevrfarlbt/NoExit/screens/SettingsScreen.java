@@ -33,7 +33,6 @@ public class SettingsScreen implements Screen {
 
     @Override
     public void show() {
-        // Переключаем сцену на ExtendViewport, чтобы кнопки центрировались на весь экран
         stage = new Stage(new ExtendViewport(MyGdxGame.SCR_WIDTH, MyGdxGame.SCR_HEIGHT));
         Gdx.input.setInputProcessor(stage);
 
@@ -152,13 +151,11 @@ public class SettingsScreen implements Screen {
         Gdx.gl.glClearColor(0.2f, 0.2f, 0.2f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // Применяем виупорт перед отрисовкой фона
         stage.getViewport().apply();
         batch.setProjectionMatrix(stage.getCamera().combined);
 
         batch.begin();
         if (Assets.menuBackground != null) {
-            // Берем динамические размеры из виупорта вместо статичных констант
             float worldWidth = stage.getViewport().getWorldWidth();
             float worldHeight = stage.getViewport().getWorldHeight();
             batch.draw(Assets.menuBackground, 0, 0, worldWidth, worldHeight);
@@ -171,7 +168,6 @@ public class SettingsScreen implements Screen {
 
     @Override
     public void resize(int width, int height) {
-        // Обновляем виупорт сцены
         stage.getViewport().update(width, height, true);
     }
 

@@ -40,7 +40,7 @@ import com.bevrfarlbt.NoExit.objects.PowerUp;
 import com.bevrfarlbt.NoExit.objects.Turret;
 import com.bevrfarlbt.NoExit.data.RoomData;
 import com.bevrfarlbt.NoExit.managers.AttackListener;
-import com.bevrfarlbt.NoExit.managers.ShopManager; // Импорт менеджера магазина
+import com.bevrfarlbt.NoExit.managers.ShopManager;
 import com.bevrfarlbt.NoExit.managers.TutorialManager;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -150,17 +150,8 @@ public class PlayScreen implements Screen {
     }
 
     private void createExitBlocker() {
-
-        exitBlocker = bodyFactory.createRect(
-                currentRoom.position.x + roomW - tileSize / 2f,
-                roomH / 2f,
-                tileSize,
-                tileSize * 3f,
-                true,
-                0,
-                0,
-                "exit_blocker"
-        );
+        exitBlocker = bodyFactory.createRect(currentRoom.position.x + roomW - tileSize / 2f,
+                roomH / 2f, tileSize, tileSize * 3f, true, 0, 0, "exit_blocker");
     }
 
     private void createSkin() {
@@ -285,8 +276,6 @@ public class PlayScreen implements Screen {
 
     private void handleInput(float dt) {
         if (isGameOver) return;
-
-        // Проверяем нажатие на цифру 1 для установки турели из общего инвентаря сохранения
         if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) {
             if (ShopManager.useTurretFromInventory()) {
                 float pX = player.body.getPosition().x * B2DVars.PPM;
@@ -340,11 +329,9 @@ public class PlayScreen implements Screen {
 
                 if (angleDeg < player.getAttackAngleRange() / 2f) {
                     z.takeDamage(1);
-
                     if (Assets.hitSound != null && Settings.soundHitEnabled) {
                         Assets.hitSound.play(0.8f);
                     }
-
                     z.applyStun(0.3f);
                     z.body.setLinearVelocity(toZ.cpy().nor().scl(6f));
                 }
@@ -363,10 +350,12 @@ public class PlayScreen implements Screen {
         batch.setProjectionMatrix(cam.combined);
         batch.begin();
         levelRenderer.render(batch, currentRoom);
+
         if (nextRoom != null) {
             drawCorridor();
             levelRenderer.render(batch, nextRoom);
         }
+
         if (!roomCleared) {
             batch.setColor(0, 0, 0, 0.8f);
             batch.draw(Assets.leftRightWall, currentRoom.position.x + roomW - tileSize, roomH / 2 - tileSize, tileSize, tileSize * 3);
@@ -374,9 +363,9 @@ public class PlayScreen implements Screen {
         }
 
         for (Turret t : turrets) t.draw(batch);
-
         for (EnemyZombie z : zombies) z.draw(batch);
         for (PowerUp p : powerUps) p.draw(batch);
+
         player.draw(batch);
         batch.end();
 
@@ -407,24 +396,15 @@ public class PlayScreen implements Screen {
         int seconds = (int) (sessionTimeSeconds % 60);
         Assets.mainFont.draw(batch, String.format("Время: %02d:%02d", minutes, seconds), worldCenterX - 60f, worldTopY - 45f);
 
-        // Отображаем количество монет и турелей из ShopManager
         Assets.mainFont.draw(batch, "Монеты: " + ShopManager.getCoins(), 20f, startY - 20f);
         Assets.mainFont.draw(batch, "Турели [1]: " + ShopManager.getTurretInventory(), 20f, startY - 45f);
         if (!Settings.tutorialCompleted
                 && TutorialManager.getCurrentStep() == TutorialManager.Step.PLACE_TURRET) {
-            Assets.mainFont.draw(
-                    batch,
-                    "↑ Нажмите сюда \n для установки турели",
-                    uiViewport.getWorldWidth() - 500,
-                    380
-            );
+            Assets.mainFont.draw(batch, "Нажмите сюда \n для установки турели", uiViewport.getWorldWidth() - 500, 380);
         }
 
         if (!Settings.tutorialCompleted) {
-            tutorialLayout.setText(
-                    Assets.mainFont,
-                    TutorialManager.getCurrentText()
-            );
+            tutorialLayout.setText(Assets.mainFont, TutorialManager.getCurrentText());
             Assets.mainFont.draw(batch, tutorialLayout,
                     uiViewport.getWorldWidth() - tutorialLayout.width - 40,
                     uiViewport.getWorldHeight() - 140);
@@ -484,11 +464,7 @@ public class PlayScreen implements Screen {
         }
 
         if (turretButton != null) {
-            turretButton.setText(
-                    "Турель (" +
-                            ShopManager.getTurretInventory() +
-                            ")"
-            );
+            turretButton.setText("Турель (" + ShopManager.getTurretInventory() + ")");
         }
 
         float camX = Math.max(player.body.getPosition().x * B2DVars.PPM, gameViewport.getWorldWidth() / 2f);
@@ -524,7 +500,7 @@ public class PlayScreen implements Screen {
                 roomCleared = true;
                 powerUps.clear();
                 roomsClearedCount++;
-                ShopManager.addCoins(1); // Начисляем 1 монету за зачистку комнаты
+                ShopManager.addCoins(1);
             }
         }
         if (roomCleared && nextRoom == null) {
@@ -628,12 +604,7 @@ public class PlayScreen implements Screen {
         aimTouchpad.setBounds(uiWidth - 250, 50, 200, 200);
 
         if (turretButton != null) {
-            turretButton.setBounds(
-                    uiWidth - 240,
-                    270,
-                    180,
-                    70
-            );
+            turretButton.setBounds(uiWidth - 240, 270, 180, 70);
         }
     }
 

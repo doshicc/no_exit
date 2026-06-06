@@ -24,8 +24,7 @@ public class Turret {
     public boolean isDestroyed = false;
     private boolean faceLeft = false;
 
-    // Новые поля для ХП и отрисовки выстрела
-    private int health = 5; // Зомби могут сломать турель раньше времени кулаками
+    private int health = 5;
     private final ShapeRenderer lineRenderer;
     private Vector2 lastTargetPosPx = null;
     private float beamVisibleTimer = 0f;
@@ -85,9 +84,8 @@ public class Turret {
             setState(EntityState.ATTACK);
             closestZombie.takeDamage(1);
 
-            // Фиксируем координаты для отрисовки лазерного луча / линии пули
             lastTargetPosPx = closestZombie.body.getPosition().cpy().scl(B2DVars.PPM);
-            beamVisibleTimer = 0.15f; // Линия видна 0.15 секунды
+            beamVisibleTimer = 0.15f;
 
             if (closestZombie.body.getPosition().x < turretPosInMeters.x) {
                 faceLeft = true;
@@ -135,18 +133,16 @@ public class Turret {
         TextureRegion frame = anim.getKeyFrame(stateTime, isLooping);
         batch.draw(frame, faceLeft ? position.x + 32 : position.x - 32, position.y - 32, faceLeft ? -64 : 64, 64);
 
-        // Рисуем вспышку / лазерную траекторию, если турель только что выстрелила
         if (beamVisibleTimer > 0 && lastTargetPosPx != null) {
-            batch.end(); // Приостанавливаем спрайтбатч для рисования примитивов
+            batch.end();
 
             lineRenderer.setProjectionMatrix(batch.getProjectionMatrix());
             lineRenderer.begin(ShapeRenderer.ShapeType.Line);
-            lineRenderer.setColor(Color.CYAN); // Цвет луча
-            // Стреляем из дула (примерно по центру турели)
+            lineRenderer.setColor(Color.CYAN);
             lineRenderer.line(position.x, position.y + 10, lastTargetPosPx.x, lastTargetPosPx.y);
             lineRenderer.end();
 
-            batch.begin(); // Возобновляем спрайтбатч
+            batch.begin();
         }
     }
 

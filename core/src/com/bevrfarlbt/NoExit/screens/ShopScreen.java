@@ -27,7 +27,7 @@ public class ShopScreen implements Screen {
     private Texture buttonUpTexture;
     private Texture buttonDownTexture;
 
-    private Label infoLabel; // Текст с количеством монет и турелей
+    private Label infoLabel;
 
     public ShopScreen(final MyGdxGame game) {
         this.game = game;
@@ -68,14 +68,12 @@ public class ShopScreen implements Screen {
         style.up = new TextureRegionDrawable(new TextureRegion(buttonUpTexture));
         style.down = new TextureRegionDrawable(new TextureRegion(buttonDownTexture));
 
-        // Инициализация метки информации о балансе
         Label.LabelStyle labelStyle = new Label.LabelStyle();
         labelStyle.font = Assets.mainFont;
         labelStyle.fontColor = Color.YELLOW;
         infoLabel = new Label("", labelStyle);
         updateInfoLabel();
 
-        // Кнопка покупки турели за 5 монет
         TextButton buyTurretButton = new TextButton("КУПИТЬ ТУРЕЛЬ (5 мон.)", style);
         buyTurretButton.addListener(new ClickListener() {
             @Override
@@ -87,7 +85,6 @@ public class ShopScreen implements Screen {
             }
         });
 
-        // Кнопка возврата в меню
         TextButton backButton = new TextButton("НАЗАД", style);
         backButton.addListener(new ClickListener() {
             @Override
@@ -100,7 +97,6 @@ public class ShopScreen implements Screen {
         table.setFillParent(true);
         table.center();
 
-        // Формируем интерфейс магазина вертикально
         table.add(infoLabel).padBottom(40).row();
         table.add(buyTurretButton).width(350).height(70).padBottom(20).row();
         table.add(backButton).width(350).height(70);

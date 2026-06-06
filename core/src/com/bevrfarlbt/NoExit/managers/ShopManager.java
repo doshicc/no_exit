@@ -13,7 +13,6 @@ public class ShopManager {
         }
     }
 
-    // --- МОНЕТЫ ---
     public static int getCoins() {
         init();
         return prefs.getInteger("coins", 0);
@@ -23,7 +22,7 @@ public class ShopManager {
         init();
         int current = getCoins();
         prefs.putInteger("coins", current + amount);
-        prefs.flush(); // сохраняем на диск
+        prefs.flush();
     }
 
     public static boolean spendCoins(int amount) {
@@ -34,10 +33,9 @@ public class ShopManager {
             prefs.flush();
             return true;
         }
-        return false; // не хватает монет
+        return false;
     }
 
-    // --- ТУРЕЛИ (сколько штук игрок купил в запас) ---
     public static int getTurretInventory() {
         init();
         return prefs.getInteger("turret_inventory", 0);
@@ -58,6 +56,6 @@ public class ShopManager {
             prefs.flush();
             return true;
         }
-        return false; // нет турелей в запасе
+        return false;
     }
 }

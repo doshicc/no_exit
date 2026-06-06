@@ -14,37 +14,27 @@ import com.badlogic.gdx.utils.Array;
 public class Assets {
     public static AssetManager manager = new AssetManager();
 
-    // Окружение
     public static TextureRegion floorDefault, upWall, downWall, leftRightWall, box, shelf;
     public static Array<TextureRegion> floorDetails = new Array<>();
 
-    // Игрок
     public static Animation<TextureRegion> playerIdle, playerWalk, playerAttack, playerDeath;
 
-    // --- АНИМАЦИИ ЗОМБИ ---
     public static Animation<TextureRegion> zombieDefaultIdle, zombieDefaultWalk, zombieDefaultAttack, zombieDefaultDeath;
     public static Animation<TextureRegion> zombieRunnerIdle, zombieRunnerWalk, zombieRunnerAttack, zombieRunnerDeath;
     public static Animation<TextureRegion> zombieFatIdle, zombieFatWalk, zombieFatAttack, zombieFatDeath;
 
-    // --- АНИМАЦИИ ТУРЕЛИ ---
     public static Animation<TextureRegion> turretIdle, turretAttack, turretDeath;
 
-    // Сердца
     public static TextureRegion emptyHeart, extraHeart, fullHeart;
 
-    // Бафы
     public static TextureRegion powerupHeal, powerupShield, powerupOneShot;
 
-    // UI Джойстики
     public static TextureRegion joystickBg, joystickKnob;
 
-    // Шрифты
     public static BitmapFont mainFont;
 
-    // ФОН МЕНЮ
     public static Texture menuBackground;
 
-    // --- ЗВУКИ И МУЗЫКА ---
     public static Sound hitSound;
     public static Sound powerupSound;
     public static Sound stepsSound;
@@ -78,34 +68,29 @@ public class Assets {
         manager.load("Screen/MenuBackground.png", Texture.class);
 
         for (int i = 1; i <= 2; i++) manager.load("player/idle/idle" + i + ".png", Texture.class);
-        for (int i = 1; i <= 6; i++) manager.load("player/walk/walk" + i + ".png", Texture.class);
+        for (int i = 1; i <= 12; i++) manager.load("player/walk/walk" + i + ".png", Texture.class);
         for (int i = 1; i <= 5; i++) manager.load("player/attack/attack" + i + ".png", Texture.class);
         for (int i = 1; i <= 5; i++) manager.load("player/death/death" + i + ".png", Texture.class);
 
-        // --- ЗАГРУЗКА ДЕФОЛТНОГО ЗОМБИ ---
         for (int i = 1; i <= 4; i++) manager.load("zombies/zombie_default/idle/idle" + i + ".png", Texture.class);
         for (int i = 1; i <= 4; i++) manager.load("zombies/zombie_default/walk/walk" + i + ".png", Texture.class);
         for (int i = 1; i <= 5; i++) manager.load("zombies/zombie_default/attack/attack" + i + ".png", Texture.class);
         for (int i = 1; i <= 3; i++) manager.load("zombies/zombie_default/death/death" + i + ".png", Texture.class);
 
-        // --- ЗАГРУЗКА ЗОМБИ-БЕГУНА ---
         for (int i = 1; i <= 3; i++) manager.load("zombies/zombie_runner/idle/idle" + i + ".png", Texture.class);
         for (int i = 1; i <= 3; i++) manager.load("zombies/zombie_runner/walk/walk" + i + ".png", Texture.class);
         for (int i = 1; i <= 2; i++) manager.load("zombies/zombie_runner/attack/attack" + i + ".png", Texture.class);
         for (int i = 1; i <= 3; i++) manager.load("zombies/zombie_runner/death/death" + i + ".png", Texture.class);
 
-        // --- ЗАГРУЗКА ЖИРНОГО ЗОМБИ ---
         for (int i = 1; i <= 2; i++) manager.load("zombies/zombie_fat/idle/idle" + i + ".png", Texture.class);
         for (int i = 1; i <= 4; i++) manager.load("zombies/zombie_fat/walk/walk" + i + ".png", Texture.class);
         for (int i = 1; i <= 3; i++) manager.load("zombies/zombie_fat/attack/attack" + i + ".png", Texture.class);
         for (int i = 1; i <= 3; i++) manager.load("zombies/zombie_fat/death/death" + i + ".png", Texture.class);
 
-        // --- ЗАГРУЗКА ТУРЕЛИ ---
         for (int i = 1; i <= 2; i++) manager.load("objects/turret/idle/idle" + i + ".png", Texture.class);
         for (int i = 1; i <= 4; i++) manager.load("objects/turret/attack/attack" + i + ".png", Texture.class);
         for (int i = 1; i <= 3; i++) manager.load("objects/turret/death/death" + i + ".png", Texture.class);
 
-        // --- АУДИО ---
         manager.load("sounds/hit.mp3", Sound.class);
         manager.load("sounds/powerup.mp3", Sound.class);
         manager.load("sounds/zombie.mp3", Sound.class);
@@ -149,11 +134,10 @@ public class Assets {
         menuBackground = manager.get("Screen/MenuBackground.png", Texture.class);
 
         playerIdle = new Animation<>(0.3f, getFrames("player/idle/idle", 2), Animation.PlayMode.LOOP);
-        playerWalk = new Animation<>(0.1f, getFrames("player/walk/walk", 6), Animation.PlayMode.LOOP);
+        playerWalk = new Animation<>(0.1f, getFrames("player/walk/walk", 12), Animation.PlayMode.LOOP);
         playerAttack = new Animation<>(0.07f, getFrames("player/attack/attack", 5), Animation.PlayMode.NORMAL);
         playerDeath = new Animation<>(0.25f, getFrames("player/death/death", 5), Animation.PlayMode.NORMAL);
 
-        // Инициализация анимаций зомби
         zombieDefaultIdle = new Animation<>(0.2f, getFrames("zombies/zombie_default/idle/idle", 4), Animation.PlayMode.LOOP);
         zombieDefaultWalk = new Animation<>(0.15f, getFrames("zombies/zombie_default/walk/walk", 4), Animation.PlayMode.LOOP);
         zombieDefaultAttack = new Animation<>(0.15f, getFrames("zombies/zombie_default/attack/attack", 5), Animation.PlayMode.LOOP);
@@ -169,7 +153,6 @@ public class Assets {
         zombieFatAttack = new Animation<>(0.2f, getFrames("zombies/zombie_fat/attack/attack", 3), Animation.PlayMode.LOOP);
         zombieFatDeath = new Animation<>(0.25f, getFrames("zombies/zombie_fat/death/death", 3), Animation.PlayMode.NORMAL);
 
-        // Инициализация анимаций турели
         turretIdle = new Animation<>(0.25f, getFrames("objects/turret/idle/idle", 2), Animation.PlayMode.LOOP);
         turretAttack = new Animation<>(0.1f, getFrames("objects/turret/attack/attack", 4), Animation.PlayMode.NORMAL);
         turretDeath = new Animation<>(0.15f, getFrames("objects/turret/death/death", 3), Animation.PlayMode.NORMAL);

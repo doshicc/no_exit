@@ -14,18 +14,16 @@ public class LevelManager {
 
     public RoomData createRoom(float offsetX, float offsetY, float width, float height, boolean isFirstRoom) {
         RoomData room = new RoomData(offsetX, offsetY, width, height);
-        int cols = (int) (width / tileSize); // делим высоту и ширину комнаты и делим на размер плитки чтобы узнать скок плиток прорисовывать
+        int cols = (int) (width / tileSize);
         int rows = (int) (height / tileSize);
-        room.floorMap = new int[cols][rows]; // создаем двухмерный массив в котором записываем стены и полы
+        room.floorMap = new int[cols][rows];
 
-        // Генерация пола
         for (int x = 0; x < cols; x++) {
             for (int y = 0; y < rows; y++) {
                 room.floorMap[x][y] = (MathUtils.random() < 0.20f) ? MathUtils.random(1, 3) : 0;
             }
         }
 
-        // Стены
         for (float x = 0; x < width; x += tileSize) {
             room.bodies.add(bodyFactory.createRect(offsetX + x + tileSize/2, offsetY + tileSize/2, tileSize, tileSize, true, 0, 0, "wall_low"));
             room.bodies.add(bodyFactory.createRect(offsetX + x + tileSize/2, offsetY + height - tileSize/2, tileSize, tileSize, true, 0, 0, "wall_up"));
@@ -51,6 +49,6 @@ public class LevelManager {
                 room.bodies.add(bodyFactory.createRect(ox, oy, 80, 25, true, 0, 0, "shelf"));
             }
         }
-        return room; //OffsetX И Y - левый нижний угол каждой комнаты, а xy - координаты плиток в каждом объекте который идет по порядку, tilesize - размер плитки. tilesize/2, тк box2d отрисовывает посередине именно
+        return room;
     }
 }

@@ -22,7 +22,6 @@ public class LevelRenderer {
                 TextureRegion tile;
                 int tileType = room.floorMap[x][y];
 
-                // Выбираем текстуру пола на основе данных из RoomData
                 if (tileType > 0 && tileType <= Assets.floorDetails.size) {
                     tile = Assets.floorDetails.get(tileType - 1);
                 } else {
@@ -51,12 +50,10 @@ public class LevelRenderer {
                     break;
 
                 case "box":
-                    // Хитбокс 25x25, спрайт 40x40. Центрируем.
                     batch.draw(Assets.box, x - 20, y - 20, 40, 40);
                     break;
 
                 case "wall_up":
-                    // Стены статичны 64x64, тут хитбокс совпадает со спрайтом.
                     batch.draw(Assets.upWall, x - 32, y - 32, 64, 64);
                     break;
 

@@ -10,7 +10,6 @@ public class BodyFactory {
         this.world = world;
     }
 
-    // Твой старый метод для прямоугольников
     public Body createRect(float x, float y, float width, float height, boolean isStatic, float density, float damping, String userData) {
         BodyDef bdef = new BodyDef();
         bdef.type = isStatic ? BodyDef.BodyType.StaticBody : BodyDef.BodyType.DynamicBody;
@@ -32,7 +31,6 @@ public class BodyFactory {
         return body;
     }
 
-    // НОВЫЙ МЕТОД: Создание круглой физики (для зомби и сущностей)
     public Body createCircle(float x, float y, float radius, boolean isStatic, float density, String userData, Object entityInstance) {
         BodyDef bdef = new BodyDef();
         bdef.type = isStatic ? BodyDef.BodyType.StaticBody : BodyDef.BodyType.DynamicBody;
@@ -46,10 +44,10 @@ public class BodyFactory {
         FixtureDef fdef = new FixtureDef();
         fdef.shape = shape;
         fdef.density = density;
-        fdef.filter.categoryBits = (short) 2; // Категория врагов
+        fdef.filter.categoryBits = (short) 2;
 
         body.createFixture(fdef).setUserData(userData);
-        body.setUserData(entityInstance); // Привязываем ссылку на конкретный класс зомби
+        body.setUserData(entityInstance);
         shape.dispose();
         return body;
     }
