@@ -66,6 +66,7 @@ public class PlayScreen implements Screen {
     private boolean roomCleared = false;
 
     private int roomsClearedCount = 0;
+    private int roomLevel = 1;
     private float sessionTimeSeconds = 0f;
 
     private TextureRegion uiFullHeart, uiEmptyHeart, uiExtraHeart;
@@ -476,7 +477,7 @@ public class PlayScreen implements Screen {
         if (!roomCleared) {
             boolean anyAlive = false;
             for (EnemyZombie z : zombies) {
-                if (z.isDead && z.getPowerUp() == null) {
+                if (z.isDead && !z.hasRolledPowerUp()) {
                     PowerUp p = null;
                     if (!Settings.tutorialCompleted && TutorialManager.getCurrentStep() == TutorialManager.Step.KILL_ZOMBIE && !TutorialManager.hasSpawnedTutorialPowerUp()) {
                         p = z.forceSpawnPowerUp();
@@ -501,6 +502,7 @@ public class PlayScreen implements Screen {
                 powerUps.clear();
                 roomsClearedCount++;
                 ShopManager.addCoins(1);
+                roomLevel++;
             }
         }
         if (roomCleared && nextRoom == null) {
@@ -564,19 +566,51 @@ public class PlayScreen implements Screen {
     }
 
     private void spawnZombies(RoomData room) {
-        int num = MathUtils.random(5, 11);
-        for (int i = 0; i < num; i++) {
+
+        int budget = 3 + roomLevel * 2;
+
+        while (budget > 0) {
+
             float spawnX = room.position.x + MathUtils.random(100, roomW - 100);
             float spawnY = room.position.y + MathUtils.random(100, roomH - 100);
 
-            float rand = MathUtils.random();
-
-            if (rand <= 0.20f) {
-                zombies.add(new ZombieFat(bodyFactory, spawnX, spawnY));
-            } else if (rand <= 0.50f) {
-                zombies.add(new ZombieRunner(bodyFactory, spawnX, spawnY));
-            } else {
+            if (roomLevel <= 3) {
                 zombies.add(new EnemyZombie(bodyFactory, spawnX, spawnY));
+                budget -= 1;
+                continue;
+            }
+
+            if (roomLevel <= 6) {
+
+                float roll = MathUtils.random();
+
+                if (roll < 0.25f && budget >= 2) {
+                    zombies.add(new ZombieRunner(bodyFactory, spawnX, spawnY));
+                    budget -= 2;
+                } else {
+                    zombies.add(new EnemyZombie(bodyFactory, spawnX, spawnY));
+                    budget -= 1;
+                }
+
+                continue;
+            }
+
+            float roll = MathUtils.random();
+
+            if (roll < 0.15f && budget >= 4) {
+
+                zombies.add(new ZombieFat(bodyFactory, spawnX, spawnY));
+                budget -= 4;
+
+            } else if (roll < 0.45f && budget >= 2) {
+
+                zombies.add(new ZombieRunner(bodyFactory, spawnX, spawnY));
+                budget -= 2;
+
+            } else {
+
+                zombies.add(new EnemyZombie(bodyFactory, spawnX, spawnY));
+                budget -= 1;
             }
         }
     }

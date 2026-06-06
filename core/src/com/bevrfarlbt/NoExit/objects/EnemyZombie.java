@@ -163,20 +163,29 @@ public class EnemyZombie {
     }
 
     public PowerUp trySpawnPowerUp() {
-        if (hasRolledPowerUp) return null;
+        if (hasRolledPowerUp) {
+            return null;
+        }
         hasRolledPowerUp = true;
 
-        if (MathUtils.random() <= 0.15f) {
-            float posX = (body != null ? body.getPosition().x : 0f) * B2DVars.PPM;
-            float posY = (body != null ? body.getPosition().y : 0f) * B2DVars.PPM;
+        float r = MathUtils.random();
 
+        if (r <= 0.15f) {
+            float roll = MathUtils.random();
             PowerUp.Type type;
-            int rand = MathUtils.random(1, 3);
-            if (rand == 1) type = PowerUp.Type.HEAL;
-            else if (rand == 2) type = PowerUp.Type.SHIELD;
-            else type = PowerUp.Type.ONE_SHOT;
-
-            droppedPowerUp = new PowerUp(posX, posY, type);
+            if (roll < 0.50f) {
+                type = PowerUp.Type.HEAL;
+            }
+            else if (roll < 0.85f) {
+                type = PowerUp.Type.SHIELD;
+            }
+            else {
+                type = PowerUp.Type.ONE_SHOT;
+            }
+            droppedPowerUp = new PowerUp(
+                    body.getPosition().x * B2DVars.PPM,
+                    body.getPosition().y * B2DVars.PPM,
+                    type);
             return droppedPowerUp;
         }
         return null;
@@ -198,6 +207,10 @@ public class EnemyZombie {
         );
 
         return droppedPowerUp;
+    }
+
+    public boolean hasRolledPowerUp() {
+        return hasRolledPowerUp;
     }
 
     public void setState(EntityState newState) {
@@ -235,9 +248,8 @@ public class EnemyZombie {
             batch.setColor(1f, 0.3f, 0.3f, 1f);
         }
 
-        batch.draw(frame, isFacingLeft ? x + 32 : x - 32, y - 32, isFacingLeft ? -64 : 64, 64);
-
-        batch.setColor(Color.WHITE);
+        float drawSize = 50f;
+        batch.draw(frame, isFacingLeft ? x + drawSize / 2 : x - drawSize / 2, y - drawSize / 2, isFacingLeft ? -drawSize : drawSize, drawSize);batch.setColor(Color.WHITE);
     }
 
     public PowerUp getPowerUp() {

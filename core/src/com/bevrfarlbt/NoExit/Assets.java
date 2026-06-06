@@ -73,7 +73,7 @@ public class Assets {
         for (int i = 1; i <= 5; i++) manager.load("player/death/death" + i + ".png", Texture.class);
 
         for (int i = 1; i <= 4; i++) manager.load("zombies/zombie_default/idle/idle" + i + ".png", Texture.class);
-        for (int i = 1; i <= 4; i++) manager.load("zombies/zombie_default/walk/walk" + i + ".png", Texture.class);
+        for (int i = 1; i <= 10; i++) manager.load("zombies/zombie_default/walk/walk" + i + ".png", Texture.class);
         for (int i = 1; i <= 5; i++) manager.load("zombies/zombie_default/attack/attack" + i + ".png", Texture.class);
         for (int i = 1; i <= 3; i++) manager.load("zombies/zombie_default/death/death" + i + ".png", Texture.class);
 
@@ -139,7 +139,7 @@ public class Assets {
         playerDeath = new Animation<>(0.25f, getFrames("player/death/death", 5), Animation.PlayMode.NORMAL);
 
         zombieDefaultIdle = new Animation<>(0.2f, getFrames("zombies/zombie_default/idle/idle", 4), Animation.PlayMode.LOOP);
-        zombieDefaultWalk = new Animation<>(0.15f, getFrames("zombies/zombie_default/walk/walk", 4), Animation.PlayMode.LOOP);
+        zombieDefaultWalk = new Animation<>(0.1f, getFrames("zombies/zombie_default/walk/walk", 10), Animation.PlayMode.LOOP);
         zombieDefaultAttack = new Animation<>(0.15f, getFrames("zombies/zombie_default/attack/attack", 5), Animation.PlayMode.LOOP);
         zombieDefaultDeath = new Animation<>(0.25f, getFrames("zombies/zombie_default/death/death", 3), Animation.PlayMode.NORMAL);
 
