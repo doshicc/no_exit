@@ -18,6 +18,7 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.bevrfarlbt.NoExit.Assets;
 import com.bevrfarlbt.NoExit.MyGdxGame;
 import com.bevrfarlbt.NoExit.Settings;
+import com.bevrfarlbt.NoExit.managers.SaveManager;
 
 public class MenuScreen implements Screen {
     private final MyGdxGame game;
@@ -86,6 +87,7 @@ public class MenuScreen implements Screen {
         style.down = new TextureRegionDrawable(new TextureRegion(buttonDownTexture));
 
         TextButton playButton = new TextButton("ИГРАТЬ", style);
+        TextButton continueButton = new TextButton("ПРОДОЛЖИТЬ", style);
         TextButton shopButton = new TextButton("МАГАЗИН", style);
         TextButton settingsButton = new TextButton("НАСТРОЙКИ", style);
         TextButton exitButton = new TextButton("ВЫХОД", style);
@@ -93,6 +95,10 @@ public class MenuScreen implements Screen {
         Table table = new Table();
         table.setFillParent(true);
         table.center();
+
+        if (SaveManager.hasSave()) {
+            table.add(continueButton).pad(15).width(350).height(70).row();
+        }
 
         table.add(playButton).pad(15).width(350).height(70).row();
         table.add(shopButton).pad(15).width(350).height(70).row();
@@ -102,6 +108,8 @@ public class MenuScreen implements Screen {
         playButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+
+                SaveManager.deleteSave();
 
                 if (Assets.menuSound != null) {
                     try {
@@ -114,6 +122,20 @@ public class MenuScreen implements Screen {
                 } else {
                     game.setScreen(new PlayScreen(game));
                 }
+            }
+        });
+
+        continueButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+
+                if (Assets.menuSound != null) {
+                    try {
+                        Assets.menuSound.stop();
+                    } catch (Exception ignored) {}
+                }
+
+                game.setScreen(new PlayScreen(game));
             }
         });
 

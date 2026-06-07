@@ -183,5 +183,13 @@ public class Player {
         shapeRenderer.end();
     }
 
+    public void setLives(int lives) {
+        currentLives = Math.max(0, Math.min(lives, maxLives));
+    }
+
+    public void setExtraLife(boolean hasExtraLife) {
+        this.hasExtraLife = hasExtraLife;
+    }
+
     public void dispose() { shapeRenderer.dispose(); }
 }

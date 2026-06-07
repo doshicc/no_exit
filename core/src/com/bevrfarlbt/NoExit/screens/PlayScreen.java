@@ -44,6 +44,8 @@ import com.bevrfarlbt.NoExit.managers.ShopManager;
 import com.bevrfarlbt.NoExit.managers.TutorialManager;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.physics.box2d.Body;
+import com.bevrfarlbt.NoExit.managers.SaveManager;
+
 
 public class PlayScreen implements Screen {
     private final MyGdxGame game;
@@ -138,6 +140,21 @@ public class PlayScreen implements Screen {
 
         createSkin();
         createUI();
+        if (SaveManager.hasSave()) {
+
+            roomsClearedCount = SaveManager.getRooms();
+            roomLevel = SaveManager.getRoomLevel();
+
+            sessionTimeSeconds = SaveManager.getSessionTime();
+
+            player.setLives(
+                    SaveManager.getLives());
+
+            if (SaveManager.hasExtraLifeSaved()) {
+                player.addExtraLife();
+            }
+        }
+
         spawnZombies(currentRoom);
 
         if (Assets.gameTracks.size > 0 && Settings.musicGameEnabled) {
@@ -288,6 +305,7 @@ public class PlayScreen implements Screen {
                         currentMusic.stop();
                     } catch (Exception ignored) {}
                 }
+                saveProgress();
 
                 game.setScreen(new MenuScreen(game));
             }
@@ -498,6 +516,7 @@ public class PlayScreen implements Screen {
             for (EnemyZombie z : zombies) z.update(dt, player.body.getPosition(), player, turrets);
 
             if (player.getLives() <= 0) {
+                SaveManager.deleteSave();
                 isGameOver = true;
                 if (currentMusic != null) {
                     try { currentMusic.stop(); } catch (Exception ignored) {}
@@ -614,6 +633,19 @@ public class PlayScreen implements Screen {
         currentRoom.bodies.add(bodyFactory.createRect(startX + (endX - startX) / 2, roomH / 2 + tileSize * 2 + 5, (endX - startX), 10, true, 0, 0, "wall_up"));
     }
 
+    private void saveProgress() {
+
+        SaveManager.save(
+                roomsClearedCount,
+                roomLevel,
+                ShopManager.getCoins(),
+                ShopManager.getTurretInventory(),
+                player.getLives(),
+                player.hasExtraLife(),
+                sessionTimeSeconds
+        );
+    }
+
     private void spawnZombies(RoomData room) {
 
         int budget = 3 + roomLevel * 2;
@@ -696,6 +728,9 @@ public class PlayScreen implements Screen {
     @Override public void hide() {
         if (currentMusic != null) {
             try { currentMusic.stop(); } catch (Exception ignored) {}
+        }
+        if (!isGameOver) {
+            saveProgress();
         }
     }
 

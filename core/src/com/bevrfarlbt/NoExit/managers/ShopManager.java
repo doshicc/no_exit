@@ -18,6 +18,23 @@ public class ShopManager {
         return prefs.getInteger("coins", 0);
     }
 
+    public static void setCoins(int coins) {
+        init();
+        prefs.putInteger("coins", coins);
+        prefs.flush();
+    }
+
+    public static int getTurretInventory() {
+        init();
+        return prefs.getInteger("turret_inventory", 0);
+    }
+
+    public static void setTurretInventory(int turretInventory) {
+        init();
+        prefs.putInteger("turret_inventory", turretInventory);
+        prefs.flush();
+    }
+
     public static void addCoins(int amount) {
         init();
         int current = getCoins();
@@ -34,11 +51,6 @@ public class ShopManager {
             return true;
         }
         return false;
-    }
-
-    public static int getTurretInventory() {
-        init();
-        return prefs.getInteger("turret_inventory", 0);
     }
 
     public static void addTurretsToInventory(int count) {
