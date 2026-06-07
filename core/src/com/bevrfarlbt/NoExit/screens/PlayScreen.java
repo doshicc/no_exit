@@ -45,6 +45,8 @@ import com.bevrfarlbt.NoExit.managers.TutorialManager;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.bevrfarlbt.NoExit.managers.SaveManager;
+import com.bevrfarlbt.NoExit.data.Document;
+import com.bevrfarlbt.NoExit.managers.DocumentManager;
 
 
 public class PlayScreen implements Screen {
@@ -82,6 +84,10 @@ public class PlayScreen implements Screen {
     private boolean isGameOver = false;
     private boolean isPaused = false;
     private Table pauseTable;
+    private Table documentTable;
+    private Label documentTitle;
+    private Label documentText;
+    private boolean documentOpened = false;
 
     private boolean wasAimingLastFrame = false;
 
@@ -340,6 +346,48 @@ public class PlayScreen implements Screen {
         pauseTable.add(pauseLabel).padBottom(40).row();
         pauseTable.add(resumeBtn).size(250, 60).padBottom(15).row();
         pauseTable.add(menuBtn).size(250, 60);
+
+        documentTable = new Table();
+        documentTable.setFillParent(true);
+
+        documentTable.setVisible(false);
+
+        documentTable.setBackground(
+                skin.newDrawable(
+                        "white_pixel",
+                        new Color(0,0,0,0.9f)));
+
+        stageUI.addActor(documentTable);
+
+        documentTitle = new Label("", skin);
+        documentText = new Label("", skin);
+
+        documentText.setWrap(true);
+
+        TextButton closeDocButton =
+                new TextButton("Закрыть", skin);
+
+        closeDocButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                documentOpened = false;
+                documentTable.setVisible(false);
+                moveTouchpad.setVisible(true);
+                aimTouchpad.setVisible(true);
+            }
+        });
+
+        documentTable.add(documentTitle)
+                .padBottom(20)
+                .row();
+
+        documentTable.add(documentText)
+                .width(700)
+                .padBottom(20)
+                .row();
+
+        documentTable.add(closeDocButton)
+                .size(220,60);
     }
 
     private void handleInput(float dt) {
@@ -480,7 +528,7 @@ public class PlayScreen implements Screen {
     }
 
     private void update(float dt) {
-        if (!isGameOver && !isPaused) {
+        if (!isGameOver && !isPaused && !documentOpened) {
             world.step(1 / 60f, 6, 2);
             sessionTimeSeconds += dt;
             if (oneShotTimer > 0) oneShotTimer -= dt;
@@ -571,6 +619,35 @@ public class PlayScreen implements Screen {
                 roomsClearedCount++;
                 ShopManager.addCoins(1);
                 roomLevel++;
+                if (MathUtils.randomBoolean(0.30f)) {
+                    int chapter =
+                            DocumentManager.getCurrentChapter();
+
+                    Document doc;
+
+                    if (chapter == 99) {
+
+                        if (!DocumentManager.isCollected(41)) {
+
+                            doc = DocumentManager.getEpilogue();
+
+                            DocumentManager.markAsCollected(doc);
+
+                            showDocument(doc.title, doc.text);
+                        }
+
+                    } else {
+
+                        doc = DocumentManager.getRandomDocument(chapter);
+
+                        if (doc != null) {
+
+                            DocumentManager.markAsCollected(doc);
+
+                            showDocument(doc.title, doc.text);
+                        }
+                    }
+                }
             }
         }
         if (roomCleared && nextRoom == null) {
@@ -646,6 +723,21 @@ public class PlayScreen implements Screen {
         );
     }
 
+    private void showDocument(
+            String title,
+            String text) {
+
+        documentOpened = true;
+
+        documentTitle.setText(title);
+        documentText.setText(text);
+
+        documentTable.setVisible(true);
+
+        moveTouchpad.setVisible(false);
+        aimTouchpad.setVisible(false);
+    }
+
     private void spawnZombies(RoomData room) {
 
         int budget = 3 + roomLevel * 2;
@@ -694,6 +786,22 @@ public class PlayScreen implements Screen {
                 budget -= 1;
             }
         }
+    }
+
+    private int getCurrentChapter() {
+        if (roomsClearedCount < 8) {
+            return 1;
+        }
+        if (roomsClearedCount < 16) {
+            return 2;
+        }
+        if (roomsClearedCount < 24) {
+            return 3;
+        }
+        if (roomsClearedCount < 32) {
+            return 4;
+        }
+        return 5;
     }
 
     private void cleanupZombies() {

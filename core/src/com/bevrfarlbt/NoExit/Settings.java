@@ -7,7 +7,6 @@ public class Settings {
     private static final String PREFS_NAME = "mygame_settings";
     private static Preferences prefs;
 
-    // Настройки по умолчанию
     public static boolean musicMenuEnabled = true;
     public static boolean musicGameEnabled = true;
     public static boolean soundHitEnabled = true;

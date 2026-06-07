@@ -88,6 +88,7 @@ public class MenuScreen implements Screen {
 
         TextButton playButton = new TextButton("ИГРАТЬ", style);
         TextButton continueButton = new TextButton("ПРОДОЛЖИТЬ", style);
+        TextButton archiveButton = new TextButton("АРХИВ", style);
         TextButton shopButton = new TextButton("МАГАЗИН", style);
         TextButton settingsButton = new TextButton("НАСТРОЙКИ", style);
         TextButton exitButton = new TextButton("ВЫХОД", style);
@@ -102,8 +103,17 @@ public class MenuScreen implements Screen {
 
         table.add(playButton).pad(15).width(350).height(70).row();
         table.add(shopButton).pad(15).width(350).height(70).row();
+        table.add(archiveButton).pad(15).width(350).height(70).row();
         table.add(settingsButton).pad(15).width(350).height(70).row();
         table.add(exitButton).pad(15).width(350).height(70).row();
+
+        archiveButton.addListener(
+                new ClickListener() {
+                    @Override
+                    public void clicked(InputEvent event, float x, float y) {
+                        game.setScreen(new DocumentArchiveScreen(game));
+                    }
+                });
 
         playButton.addListener(new ClickListener() {
             @Override
