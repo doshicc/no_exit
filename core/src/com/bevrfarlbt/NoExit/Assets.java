@@ -32,6 +32,7 @@ public class Assets {
     public static TextureRegion joystickBg, joystickKnob;
 
     public static BitmapFont mainFont;
+    public static BitmapFont titleFont;
 
     public static Texture menuBackground;
 
@@ -108,6 +109,11 @@ public class Assets {
         parameter.size = 24;
         parameter.characters = parameter.characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "abcdefghijklmnopqrstuvwxyz" + "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ" + "абвгдеёжзийклмнопрстуфхцчшщъыьэюя" + "0123456789" + " .,!?;:-_+=/\\()[]{}<>\"'№%&*";
         mainFont = generator.generateFont(parameter);
+
+        FreeTypeFontGenerator.FreeTypeFontParameter titleParam = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        titleParam.size = 72;
+        titleParam.characters = FreeTypeFontGenerator.DEFAULT_CHARS + "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "abcdefghijklmnopqrstuvwxyz";
+        titleFont = generator.generateFont(titleParam);
         generator.dispose();
 
         floorDefault = new TextureRegion(manager.get("level/floor/floor_default.png", Texture.class));

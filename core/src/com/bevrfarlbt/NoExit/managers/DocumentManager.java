@@ -26,6 +26,7 @@ public class DocumentManager {
     }
 
     public static int getCollectedCount(int chapter) {
+        init();
         int count = 0;
         for (Document doc : getChapter(chapter)) {
             if (isCollected(doc.id))
@@ -35,7 +36,7 @@ public class DocumentManager {
     }
 
     public static int getTotalCount(int chapter) {
-
+        init();
         return getChapter(chapter).size;
     }
 
@@ -372,43 +373,31 @@ public class DocumentManager {
     }
 
     public static boolean allDocumentsCollected() {
-
         for (int i = 1; i <= 40; i++) {
-
             if (!isCollected(i))
                 return false;
         }
-
         return true;
     }
 
     public static boolean isChapterCompleted(int chapter) {
-
         for (Document doc : getChapter(chapter)) {
-
             if (!isCollected(doc.id))
                 return false;
         }
-
         return true;
     }
 
     public static Document getRandomDocument(int chapter) {
-
         init();
-
         Array<Document> available = new Array<>();
-
         for (Document doc : getChapter(chapter)) {
-
             if (!isCollected(doc.id)) {
                 available.add(doc);
             }
         }
-
         if (available.size == 0)
             return null;
-
         return available.random();
     }
 
@@ -435,6 +424,10 @@ public class DocumentManager {
         for (Document doc : chapter5)
             if (isCollected(doc.id))
                 result.add(doc);
+
+        if (isCollected(41)) {
+            result.add(getEpilogue());
+        }
 
         return result;
     }

@@ -10,8 +10,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
@@ -86,6 +85,11 @@ public class MenuScreen implements Screen {
         style.up = new TextureRegionDrawable(new TextureRegion(buttonUpTexture));
         style.down = new TextureRegionDrawable(new TextureRegion(buttonDownTexture));
 
+        Label.LabelStyle titleStyle = new Label.LabelStyle();
+        titleStyle.font = Assets.titleFont;
+        titleStyle.fontColor = Color.ORANGE;
+        Label title = new Label("NO EXIT", titleStyle);
+
         TextButton playButton = new TextButton("ИГРАТЬ", style);
         TextButton continueButton = new TextButton("ПРОДОЛЖИТЬ", style);
         TextButton archiveButton = new TextButton("АРХИВ", style);
@@ -96,16 +100,22 @@ public class MenuScreen implements Screen {
         Table table = new Table();
         table.setFillParent(true);
         table.center();
+        table.add(title).colspan(2).padBottom(80);
+        table.row();
 
         if (SaveManager.hasSave()) {
-            table.add(continueButton).pad(15).width(350).height(70).row();
+            table.add(playButton).width(350).height(70).pad(15);
+            table.add(continueButton).width(350).height(70).pad(15);
+            table.row();
+        } else {
+            table.add(playButton).width(350).height(70).pad(15).colspan(2);
+            table.row();
         }
-
-        table.add(playButton).pad(15).width(350).height(70).row();
-        table.add(shopButton).pad(15).width(350).height(70).row();
-        table.add(archiveButton).pad(15).width(350).height(70).row();
-        table.add(settingsButton).pad(15).width(350).height(70).row();
-        table.add(exitButton).pad(15).width(350).height(70).row();
+        table.add(archiveButton).width(350).height(70).pad(15);
+        table.add(shopButton).width(350).height(70).pad(15);
+        table.row();
+        table.add(settingsButton).width(350).height(70).pad(15);
+        table.add(exitButton).width(350).height(70).pad(15);
 
         archiveButton.addListener(
                 new ClickListener() {

@@ -352,10 +352,7 @@ public class PlayScreen implements Screen {
 
         documentTable.setVisible(false);
 
-        documentTable.setBackground(
-                skin.newDrawable(
-                        "white_pixel",
-                        new Color(0,0,0,0.9f)));
+        documentTable.setBackground(skin.newDrawable("white_pixel", new Color(0,0,0,0.9f)));
 
         stageUI.addActor(documentTable);
 
@@ -377,17 +374,9 @@ public class PlayScreen implements Screen {
             }
         });
 
-        documentTable.add(documentTitle)
-                .padBottom(20)
-                .row();
-
-        documentTable.add(documentText)
-                .width(700)
-                .padBottom(20)
-                .row();
-
-        documentTable.add(closeDocButton)
-                .size(220,60);
+        documentTable.add(documentTitle).padBottom(20).row();
+        documentTable.add(documentText).width(700).padBottom(20).row();
+        documentTable.add(closeDocButton).size(220,60);
     }
 
     private void handleInput(float dt) {
@@ -575,9 +564,7 @@ public class PlayScreen implements Screen {
             }
         }
         if (turretButton != null) {
-            turretButton.setDisabled(
-                    ShopManager.getTurretInventory() <= 0
-            );
+            turretButton.setDisabled(ShopManager.getTurretInventory() <= 0);
         }
 
         if (turretButton != null) {
@@ -599,8 +586,7 @@ public class PlayScreen implements Screen {
                         p = z.forceSpawnPowerUp();
                         TutorialManager.setTutorialPowerUpSpawned(true);
                         TutorialManager.nextStep();
-                    }
-                    else {
+                    } else {
                         p = z.trySpawnPowerUp();
                     }
                     if (p != null) {
@@ -619,31 +605,18 @@ public class PlayScreen implements Screen {
                 roomsClearedCount++;
                 ShopManager.addCoins(1);
                 roomLevel++;
-                if (MathUtils.randomBoolean(0.30f)) {
-                    int chapter =
-                            DocumentManager.getCurrentChapter();
-
-                    Document doc;
-
-                    if (chapter == 99) {
-
-                        if (!DocumentManager.isCollected(41)) {
-
-                            doc = DocumentManager.getEpilogue();
-
-                            DocumentManager.markAsCollected(doc);
-
-                            showDocument(doc.title, doc.text);
-                        }
-
-                    } else {
-
-                        doc = DocumentManager.getRandomDocument(chapter);
-
+                if (DocumentManager.allDocumentsCollected()) {
+                    if (!DocumentManager.isCollected(41)) {
+                        Document epilogue = DocumentManager.getEpilogue();
+                        DocumentManager.markAsCollected(epilogue);
+                        showDocument(epilogue.title, epilogue.text);
+                    }
+                } else {
+                    if (MathUtils.randomBoolean(0.30f)) {
+                        int chapter = DocumentManager.getCurrentChapter();
+                        Document doc = DocumentManager.getRandomDocument(chapter);
                         if (doc != null) {
-
                             DocumentManager.markAsCollected(doc);
-
                             showDocument(doc.title, doc.text);
                         }
                     }
@@ -711,7 +684,6 @@ public class PlayScreen implements Screen {
     }
 
     private void saveProgress() {
-
         SaveManager.save(
                 roomsClearedCount,
                 roomLevel,
@@ -723,40 +695,27 @@ public class PlayScreen implements Screen {
         );
     }
 
-    private void showDocument(
-            String title,
-            String text) {
-
+    private void showDocument(String title, String text) {
         documentOpened = true;
-
         documentTitle.setText(title);
         documentText.setText(text);
-
         documentTable.setVisible(true);
-
         moveTouchpad.setVisible(false);
         aimTouchpad.setVisible(false);
     }
 
     private void spawnZombies(RoomData room) {
-
         int budget = 3 + roomLevel * 2;
-
         while (budget > 0) {
-
             float spawnX = room.position.x + MathUtils.random(100, roomW - 100);
             float spawnY = room.position.y + MathUtils.random(100, roomH - 100);
-
             if (roomLevel <= 3) {
                 zombies.add(new EnemyZombie(bodyFactory, spawnX, spawnY));
                 budget -= 1;
                 continue;
             }
-
             if (roomLevel <= 6) {
-
                 float roll = MathUtils.random();
-
                 if (roll < 0.25f && budget >= 2) {
                     zombies.add(new ZombieRunner(bodyFactory, spawnX, spawnY));
                     budget -= 2;
@@ -764,24 +723,16 @@ public class PlayScreen implements Screen {
                     zombies.add(new EnemyZombie(bodyFactory, spawnX, spawnY));
                     budget -= 1;
                 }
-
                 continue;
             }
-
             float roll = MathUtils.random();
-
             if (roll < 0.15f && budget >= 4) {
-
                 zombies.add(new ZombieFat(bodyFactory, spawnX, spawnY));
                 budget -= 4;
-
             } else if (roll < 0.45f && budget >= 2) {
-
                 zombies.add(new ZombieRunner(bodyFactory, spawnX, spawnY));
                 budget -= 2;
-
             } else {
-
                 zombies.add(new EnemyZombie(bodyFactory, spawnX, spawnY));
                 budget -= 1;
             }

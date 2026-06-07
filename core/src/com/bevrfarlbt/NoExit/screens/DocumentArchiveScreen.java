@@ -158,29 +158,6 @@ public class DocumentArchiveScreen implements Screen {
             }
         }
 
-        Array<Document> docs = DocumentManager.getCollectedDocuments();
-
-        if (docs.size == 0) {
-            docsTable.add(new Label("Записки ещё не найдены", skin));
-        } else {
-            for (Document doc : docs) {
-                final Document currentDoc = doc;
-                TextButton btn = new TextButton(currentDoc.title, skin);
-                btn.addListener(new ClickListener() {
-                            @Override
-                            public void clicked(InputEvent event, float x, float y) {
-                                game.setScreen(new DocumentViewScreen(game, currentDoc));
-                            }
-                        });
-
-                docsTable.add(btn)
-                        .width(500)
-                        .pad(10);
-
-                docsTable.row();
-            }
-        }
-
         ScrollPane scrollPane = new ScrollPane(docsTable, scrollStyle);
 
         TextButton backButton = new TextButton("Назад", skin);
