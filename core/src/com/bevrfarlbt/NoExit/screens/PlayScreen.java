@@ -78,6 +78,8 @@ public class PlayScreen implements Screen {
 
     private Table gameOverTable;
     private boolean isGameOver = false;
+    private boolean isPaused = false;
+    private Table pauseTable;
 
     private boolean wasAimingLastFrame = false;
 
@@ -175,6 +177,11 @@ public class PlayScreen implements Screen {
 
         skin.add("default", style);
 
+        Label.LabelStyle defaultLabelStyle = new Label.LabelStyle();
+        defaultLabelStyle.font = Assets.mainFont;
+        defaultLabelStyle.fontColor = Color.WHITE;
+        skin.add("default", defaultLabelStyle);
+
         Label.LabelStyle labelStyle = new Label.LabelStyle();
         labelStyle.font = Assets.mainFont;
         labelStyle.fontColor = Color.RED;
@@ -186,18 +193,18 @@ public class PlayScreen implements Screen {
         topTable.setFillParent(true);
         stageUI.addActor(topTable);
 
-        TextButton menuButton = new TextButton("Меню", skin);
-        menuButton.addListener(new ClickListener() {
+        TextButton pauseButton = new TextButton("Пауза", skin);
+        pauseButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                if (Assets.menuSound != null && Settings.musicMenuEnabled) Assets.menuSound.play();
-                if (currentMusic != null) {
-                    try { currentMusic.stop(); } catch (Exception ignored) {}
-                }
-                game.setScreen(new MenuScreen(game));
+                isPaused = !isPaused;
+                pauseTable.setVisible(isPaused);
+
+                moveTouchpad.setVisible(!isPaused);
+                aimTouchpad.setVisible(!isPaused);
             }
         });
-        topTable.add(menuButton).size(120, 50).expand().top().right().pad(15);
+        topTable.add(pauseButton).size(120, 50).expand().top().right().pad(15);
 
         Touchpad.TouchpadStyle touchStyle = new Touchpad.TouchpadStyle();
         touchStyle.background = new TextureRegionDrawable(Assets.joystickBg);
@@ -248,6 +255,44 @@ public class PlayScreen implements Screen {
         TextButton restartBtn = new TextButton("Играть снова", skin);
         TextButton backToMenuBtn = new TextButton("Выйти в меню", skin);
 
+        pauseTable = new Table();
+        pauseTable.setFillParent(true);
+        pauseTable.setVisible(false);
+        pauseTable.setBackground(
+                skin.newDrawable("white_pixel",
+                        new Color(0, 0, 0, 0.7f)));
+
+        stageUI.addActor(pauseTable);
+
+        Label pauseLabel = new Label("ПАУЗА", skin);
+
+        TextButton resumeBtn = new TextButton("Продолжить", skin);
+        TextButton menuBtn = new TextButton("В меню", skin);
+
+        resumeBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                isPaused = false;
+                pauseTable.setVisible(false);
+
+                moveTouchpad.setVisible(true);
+                aimTouchpad.setVisible(true);
+            }
+        });
+
+        menuBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                if (currentMusic != null) {
+                    try {
+                        currentMusic.stop();
+                    } catch (Exception ignored) {}
+                }
+
+                game.setScreen(new MenuScreen(game));
+            }
+        });
+
         restartBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -273,6 +318,10 @@ public class PlayScreen implements Screen {
         gameOverTable.add(dieLabel).padBottom(40).row();
         gameOverTable.add(restartBtn).size(250, 60).padBottom(15).row();
         gameOverTable.add(backToMenuBtn).size(250, 60);
+
+        pauseTable.add(pauseLabel).padBottom(40).row();
+        pauseTable.add(resumeBtn).size(250, 60).padBottom(15).row();
+        pauseTable.add(menuBtn).size(250, 60);
     }
 
     private void handleInput(float dt) {
@@ -413,7 +462,7 @@ public class PlayScreen implements Screen {
     }
 
     private void update(float dt) {
-        if (!isGameOver) {
+        if (!isGameOver && !isPaused) {
             world.step(1 / 60f, 6, 2);
             sessionTimeSeconds += dt;
             if (oneShotTimer > 0) oneShotTimer -= dt;
