@@ -40,15 +40,9 @@ public class IntroScreen implements Screen {
         camera = new OrthographicCamera();
         waitingForRelease = true;
         layout = new GlyphLayout();
-        viewport = new ExtendViewport(
-                MyGdxGame.SCR_WIDTH,
-                MyGdxGame.SCR_HEIGHT,
-                camera
-        );
+        viewport = new ExtendViewport(MyGdxGame.SCR_WIDTH, MyGdxGame.SCR_HEIGHT, camera);
 
-        introMusic = Gdx.audio.newMusic(
-                Gdx.files.internal("sounds/intro.mp3")
-        );
+        introMusic = Gdx.audio.newMusic(Gdx.files.internal("sounds/intro.mp3"));
 
         introMusic.setLooping(true);
         introMusic.setVolume(1.5f);
@@ -95,20 +89,16 @@ public class IntroScreen implements Screen {
     @Override
     public void render(float delta) {
         if (waitingForRelease) {
-
             if (!Gdx.input.isTouched()) {
                 waitingForRelease = false;
             }
         } else {
-
             if (Gdx.input.justTouched()
                     || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)
                     || Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
                 nextSlide();
             }
         }
-
-
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 

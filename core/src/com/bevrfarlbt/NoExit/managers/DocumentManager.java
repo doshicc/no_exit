@@ -21,7 +21,6 @@ public class DocumentManager {
     public static void markAsCollected(Document doc) {
 
         prefs.putBoolean("doc_" + doc.id, true);
-
         prefs.flush();
     }
 
@@ -341,7 +340,6 @@ public class DocumentManager {
     }
 
     private static Array<Document> getChapter(int chapter) {
-
         switch (chapter) {
             case 1: return chapter1;
             case 2: return chapter2;

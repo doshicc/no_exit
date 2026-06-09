@@ -18,15 +18,11 @@ public class SaveManager {
             float sessionTime) {
 
         prefs.putBoolean("hasSave", true);
-
         prefs.putInteger("rooms", rooms);
         prefs.putInteger("roomLevel", roomLevel);
         prefs.putInteger("lives", lives);
-
         prefs.putBoolean("extraLife", extraLife);
-
         prefs.putFloat("sessionTime", sessionTime);
-
         prefs.flush();
     }
 

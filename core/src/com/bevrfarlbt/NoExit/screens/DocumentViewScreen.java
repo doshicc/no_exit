@@ -21,21 +21,14 @@ public class DocumentViewScreen implements Screen {
     private Stage stage;
     private Skin skin;
 
-    public DocumentViewScreen(
-            MyGdxGame game,
-            Document document) {
-
+    public DocumentViewScreen(MyGdxGame game, Document document) {
         this.game = game;
         this.document = document;
     }
 
     @Override
     public void show() {
-
-        stage = new Stage(
-                new ExtendViewport(
-                        MyGdxGame.SCR_WIDTH,
-                        MyGdxGame.SCR_HEIGHT));
+        stage = new Stage(new ExtendViewport(MyGdxGame.SCR_WIDTH, MyGdxGame.SCR_HEIGHT));
 
         Gdx.input.setInputProcessor(stage);
 
@@ -43,15 +36,13 @@ public class DocumentViewScreen implements Screen {
 
         skin.add("default", Assets.mainFont);
 
-        Label.LabelStyle labelStyle =
-                new Label.LabelStyle();
+        Label.LabelStyle labelStyle = new Label.LabelStyle();
 
         labelStyle.font = Assets.mainFont;
 
         skin.add("default", labelStyle);
 
-        TextButton.TextButtonStyle buttonStyle =
-                new TextButton.TextButtonStyle();
+        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
 
         buttonStyle.font = Assets.mainFont;
 
@@ -61,70 +52,38 @@ public class DocumentViewScreen implements Screen {
     }
 
     private void createUI() {
-
         Table root = new Table();
 
         root.setFillParent(true);
 
         stage.addActor(root);
 
-        Label title =
-                new Label(
-                        document.title,
-                        skin);
-
-        Label text =
-                new Label(
-                        document.text,
-                        skin);
+        Label title = new Label(document.title, skin);
+        Label text = new Label(document.text, skin);
 
         text.setWrap(true);
 
-        TextButton back =
-                new TextButton(
-                        "Назад",
-                        skin);
+        TextButton back = new TextButton("Назад", skin);
 
-        back.addListener(
-                new ClickListener() {
-
+        back.addListener(new ClickListener() {
                     @Override
-                    public void clicked(
-                            InputEvent event,
-                            float x,
-                            float y) {
-
-                        game.setScreen(
-                                new DocumentArchiveScreen(
-                                        game));
+                    public void clicked(InputEvent event, float x, float y) {
+                        game.setScreen(new DocumentArchiveScreen(game));
                     }
                 });
 
-        root.add(title)
-                .padBottom(20)
-                .row();
+        root.add(title).padBottom(20).row();
 
-        root.add(text)
-                .width(800)
-                .padBottom(40)
-                .row();
+        root.add(text).width(800).padBottom(40).row();
 
-        root.add(back)
-                .width(250)
-                .height(60);
+        root.add(back).width(250).height(60);
     }
 
     @Override
     public void render(float delta) {
+        Gdx.gl.glClearColor(0, 0, 0, 1);
 
-        Gdx.gl.glClearColor(
-                0,
-                0,
-                0,
-                1);
-
-        Gdx.gl.glClear(
-                GL20.GL_COLOR_BUFFER_BIT);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         stage.act(delta);
         stage.draw();

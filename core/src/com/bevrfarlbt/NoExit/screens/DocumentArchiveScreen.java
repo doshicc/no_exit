@@ -28,11 +28,7 @@ public class DocumentArchiveScreen implements Screen {
 
     @Override
     public void show() {
-
-        stage = new Stage(
-                new ExtendViewport(
-                        MyGdxGame.SCR_WIDTH,
-                        MyGdxGame.SCR_HEIGHT));
+        stage = new Stage(new ExtendViewport(MyGdxGame.SCR_WIDTH, MyGdxGame.SCR_HEIGHT));
 
         Gdx.input.setInputProcessor(stage);
 
@@ -41,33 +37,24 @@ public class DocumentArchiveScreen implements Screen {
     }
 
     private void createSkin() {
-
         skin = new Skin();
 
         skin.add("default", Assets.mainFont);
 
-        Label.LabelStyle labelStyle =
-                new Label.LabelStyle();
-
+        Label.LabelStyle labelStyle = new Label.LabelStyle();
         labelStyle.font = Assets.mainFont;
 
         skin.add("default", labelStyle);
-
         TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-
         buttonStyle.font = Assets.mainFont;
-
         skin.add("default", buttonStyle);
     }
 
     private void createUI() {
-
         Table root = new Table();
 
         root.setFillParent(true);
-
         stage.addActor(root);
-
         ScrollPane.ScrollPaneStyle scrollStyle = new ScrollPane.ScrollPaneStyle();
 
         Table docsTable = new Table();
@@ -76,84 +63,46 @@ public class DocumentArchiveScreen implements Screen {
         docsTable.left();
 
         for (int chapter = 1; chapter <= 5; chapter++) {
-
-            Label chapterLabel =
-                    new Label(
-                            "Глава "
+            Label chapterLabel = new Label("Глава "
                                     + chapter
                                     + " ("
                                     + DocumentManager.getCollectedCount(chapter)
                                     + "/"
                                     + DocumentManager.getTotalCount(chapter)
-                                    + ")",
-                            skin);
+                                    + ")", skin);
 
-            docsTable.add(chapterLabel)
-                    .left()
-                    .padTop(20)
-                    .padBottom(10);
-
+            docsTable.add(chapterLabel).left().padTop(20).padBottom(10);
             docsTable.row();
 
             for (int i = 1; i <= 8; i++) {
-
                 int docId = (chapter - 1) * 8 + i;
 
                 Document foundDoc = null;
 
-                for (Document doc :
-                        DocumentManager.getCollectedDocuments()) {
-
+                for (Document doc : DocumentManager.getCollectedDocuments()) {
                     if (doc.id == docId) {
-
                         foundDoc = doc;
                         break;
                     }
                 }
 
                 if (foundDoc != null) {
-
                     final Document currentDoc = foundDoc;
-
-                    TextButton btn =
-                            new TextButton(
-                                    currentDoc.title,
-                                    skin);
-
-                    btn.addListener(
-                            new ClickListener() {
-
+                    TextButton btn = new TextButton(currentDoc.title, skin);
+                    btn.addListener(new ClickListener() {
                                 @Override
-                                public void clicked(
-                                        InputEvent event,
-                                        float x,
-                                        float y) {
-
-                                    game.setScreen(
-                                            new DocumentViewScreen(
-                                                    game,
-                                                    currentDoc));
+                                public void clicked(InputEvent event, float x, float y) {
+                                    game.setScreen(new DocumentViewScreen(game, currentDoc));
                                 }
                             });
 
-                    docsTable.add(btn)
-                            .width(500)
-                            .pad(5);
+                    docsTable.add(btn).width(500).pad(5);
 
                 } else {
-
-                    TextButton btn =
-                            new TextButton(
-                                    "???",
-                                    skin);
-
+                    TextButton btn = new TextButton("???", skin);
                     btn.setDisabled(true);
-
-                    docsTable.add(btn)
-                            .width(500)
-                            .pad(5);
+                    docsTable.add(btn).width(500).pad(5);
                 }
-
                 docsTable.row();
             }
         }
@@ -162,8 +111,7 @@ public class DocumentArchiveScreen implements Screen {
 
         TextButton backButton = new TextButton("Назад", skin);
 
-        backButton.addListener(
-                new ClickListener() {
+        backButton.addListener(new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
                         game.setScreen(new MenuScreen(game));
@@ -176,7 +124,6 @@ public class DocumentArchiveScreen implements Screen {
 
     @Override
     public void render(float delta) {
-
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1);
 
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
