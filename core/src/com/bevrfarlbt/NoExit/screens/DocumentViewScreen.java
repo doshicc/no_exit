@@ -6,6 +6,8 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 
@@ -63,20 +65,34 @@ public class DocumentViewScreen implements Screen {
 
         text.setWrap(true);
 
-        TextButton back = new TextButton("Назад", skin);
+        ImageButton back = new ImageButton(
+                new TextureRegionDrawable(Assets.backArrow)
+        );
 
         back.addListener(new ClickListener() {
-                    @Override
-                    public void clicked(InputEvent event, float x, float y) {
-                        game.setScreen(new DocumentArchiveScreen(game));
-                    }
-                });
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                game.setScreen(new DocumentArchiveScreen(game));
+            }
+        });
+
+        root.padTop(90);
 
         root.add(title).padBottom(20).row();
 
         root.add(text).width(800).padBottom(40).row();
 
-        root.add(back).width(250).height(60);
+        Table backTable = new Table();
+        backTable.setFillParent(true);
+        backTable.top().left();
+        backTable.setTouchable(Touchable.childrenOnly);
+
+        backTable.add(back)
+                .pad(20)
+                .width(60)
+                .height(60);
+
+        stage.addActor(backTable);
     }
 
     @Override

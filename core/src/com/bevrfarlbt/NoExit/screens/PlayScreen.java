@@ -496,13 +496,35 @@ public class PlayScreen implements Screen {
         float worldCenterX = uiViewport.getWorldWidth() / 2f;
         float worldTopY = uiViewport.getWorldHeight();
 
-        Assets.mainFont.draw(batch, "Комнаты: " + roomsClearedCount, worldCenterX - 60f, worldTopY - 20f);
+        Assets.mainFont.draw(batch, "Комната: " + roomLevel, worldCenterX - 60f, worldTopY - 20f);
         int minutes = (int) (sessionTimeSeconds / 60);
         int seconds = (int) (sessionTimeSeconds % 60);
         Assets.mainFont.draw(batch, String.format("Время: %02d:%02d", minutes, seconds), worldCenterX - 60f, worldTopY - 45f);
 
-        Assets.mainFont.draw(batch, "Монеты: " + ShopManager.getCoins(), 20f, startY - 20f);
-        Assets.mainFont.draw(batch, "Турели [1]: " + ShopManager.getTurretInventory(), 20f, startY - 45f);
+        float coinSize = 30f;
+        float coinX = 20f;
+        float coinY = startY - 50f;
+
+        batch.draw(Assets.coinIcon, coinX, coinY, coinSize, coinSize);
+        Assets.mainFont.draw(
+                batch,
+                String.valueOf(ShopManager.getCoins()),
+                coinX + coinSize + 8f,
+                coinY + 24f
+        );
+
+        float turretSize = 32f;
+        float turretX = 20f;
+        float turretY = coinY - 45f;
+
+        batch.draw(Assets.turretIcon, turretX, turretY, turretSize, turretSize);
+
+        Assets.mainFont.draw(
+                batch,
+                "[1] " + ShopManager.getTurretInventory(),
+                turretX + turretSize + 8f,
+                turretY + 25f
+        );
         if (!Settings.tutorialCompleted
                 && TutorialManager.getCurrentStep() == TutorialManager.Step.PLACE_TURRET) {
             Assets.mainFont.draw(batch, "Нажмите сюда \n для установки турели", uiViewport.getWorldWidth() - 500, 380);

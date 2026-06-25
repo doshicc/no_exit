@@ -30,6 +30,9 @@ public class Assets {
     public static TextureRegion powerupHeal, powerupShield, powerupOneShot;
 
     public static TextureRegion joystickBg, joystickKnob;
+    public static TextureRegion backArrow;
+    public static TextureRegion coinIcon;
+    public static TextureRegion turretIcon;
 
     public static BitmapFont mainFont;
     public static BitmapFont titleFont;
@@ -65,6 +68,10 @@ public class Assets {
 
         manager.load("player/joystick/joystick_bg.png", Texture.class);
         manager.load("player/joystick/joystick_knob.png", Texture.class);
+
+        manager.load("ui/back_arrow.png", Texture.class);
+        manager.load("ui/coin.png", Texture.class);
+        manager.load("ui/turret.png", Texture.class);
 
         manager.load("Screen/MenuBackground.png", Texture.class);
 
@@ -136,6 +143,10 @@ public class Assets {
 
         joystickBg = new TextureRegion(manager.get("player/joystick/joystick_bg.png", Texture.class));
         joystickKnob = new TextureRegion(manager.get("player/joystick/joystick_knob.png", Texture.class));
+
+        backArrow = new TextureRegion(manager.get("ui/back_arrow.png", Texture.class));
+        coinIcon = new TextureRegion(manager.get("ui/coin.png", Texture.class));
+        turretIcon = new TextureRegion(manager.get("ui/turret.png", Texture.class));
 
         menuBackground = manager.get("Screen/MenuBackground.png", Texture.class);
 

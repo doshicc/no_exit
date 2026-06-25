@@ -18,6 +18,8 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.bevrfarlbt.NoExit.Assets;
 import com.bevrfarlbt.NoExit.MyGdxGame;
 import com.bevrfarlbt.NoExit.Settings;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
+
 
 public class SettingsScreen implements Screen {
     private final MyGdxGame game;
@@ -25,6 +27,7 @@ public class SettingsScreen implements Screen {
     private Stage stage;
     private Texture btnUp;
     private Texture btnDown;
+    private Texture backArrowTexture;
 
     public SettingsScreen(final MyGdxGame game) {
         this.game = game;
@@ -69,7 +72,9 @@ public class SettingsScreen implements Screen {
         final TextButton gameMusicBtn = new TextButton(getGameMusicText(), style);
         final TextButton hitSoundBtn = new TextButton(getHitSoundText(), style);
         final TextButton zombieSoundBtn = new TextButton(getZombieSoundText(), style);
-        TextButton backBtn = new TextButton("НАЗАД В МЕНЮ", style);
+        ImageButton backBtn = new ImageButton(
+                new TextureRegionDrawable(Assets.backArrow)
+        );
 
         menuMusicBtn.addListener(new ClickListener() {
             @Override
@@ -136,9 +141,15 @@ public class SettingsScreen implements Screen {
         table.add(gameMusicBtn).pad(10).width(450).height(60).row();
         table.add(hitSoundBtn).pad(10).width(450).height(60).row();
         table.add(zombieSoundBtn).pad(10).width(450).height(60).row();
-        table.add(backBtn).pad(30).width(450).height(60).row();
 
         stage.addActor(table);
+        Table backTable = new Table();
+        backTable.setFillParent(true);
+        backTable.top().left();
+
+        backTable.add(backBtn).pad(20).width(60).height(60);
+
+        stage.addActor(backTable);
     }
 
     private String getMusicMenuText() { return "МУЗЫКА В МЕНЮ: " + (Settings.musicMenuEnabled ? "ВКЛ" : "ВЫКЛ"); }
@@ -180,5 +191,6 @@ public class SettingsScreen implements Screen {
         if (stage != null) stage.dispose();
         if (btnUp != null) btnUp.dispose();
         if (btnDown != null) btnDown.dispose();
+        if (backArrowTexture != null) backArrowTexture.dispose();
     }
 }

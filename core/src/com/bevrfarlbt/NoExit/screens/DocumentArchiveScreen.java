@@ -6,6 +6,8 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
@@ -109,17 +111,31 @@ public class DocumentArchiveScreen implements Screen {
 
         ScrollPane scrollPane = new ScrollPane(docsTable, scrollStyle);
 
-        TextButton backButton = new TextButton("Назад", skin);
+        ImageButton backButton = new ImageButton(
+                new TextureRegionDrawable(Assets.backArrow)
+        );
 
         backButton.addListener(new ClickListener() {
-                    @Override
-                    public void clicked(InputEvent event, float x, float y) {
-                        game.setScreen(new MenuScreen(game));
-                    }
-                });
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                game.setScreen(new MenuScreen(game));
+            }
+        });
 
-        root.add(scrollPane).expand().fill().row();
-        root.add(backButton).pad(20);
+        root.padTop(90);
+        root.add(scrollPane).expand().fill();
+
+        Table backTable = new Table();
+        backTable.setFillParent(true);
+        backTable.top().left();
+        backTable.setTouchable(Touchable.childrenOnly);
+
+        backTable.add(backButton)
+                .pad(20)
+                .width(60)
+                .height(60);
+
+        stage.addActor(backTable);
     }
 
     @Override

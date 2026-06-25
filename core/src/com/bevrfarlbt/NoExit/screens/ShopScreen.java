@@ -19,6 +19,8 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.bevrfarlbt.NoExit.Assets;
 import com.bevrfarlbt.NoExit.MyGdxGame;
 import com.bevrfarlbt.NoExit.managers.ShopManager;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 
 public class ShopScreen implements Screen {
     private final MyGdxGame game;
@@ -27,7 +29,9 @@ public class ShopScreen implements Screen {
     private Texture buttonUpTexture;
     private Texture buttonDownTexture;
 
-    private Label infoLabel;
+    private Label coinsLabel;
+    private Label turretCountLabel;
+    private Label messageLabel;
 
     public ShopScreen(final MyGdxGame game) {
         this.game = game;
@@ -71,21 +75,71 @@ public class ShopScreen implements Screen {
         Label.LabelStyle labelStyle = new Label.LabelStyle();
         labelStyle.font = Assets.mainFont;
         labelStyle.fontColor = Color.YELLOW;
-        infoLabel = new Label("", labelStyle);
+
+        Label.LabelStyle messageStyle = new Label.LabelStyle();
+        messageStyle.font = Assets.mainFont;
+        messageStyle.fontColor = Color.WHITE;
+
+        coinsLabel = new Label("", labelStyle);
+        turretCountLabel = new Label("", labelStyle);
+        messageLabel = new Label("", messageStyle);
+
         updateInfoLabel();
 
-        TextButton buyTurretButton = new TextButton("КУПИТЬ ТУРЕЛЬ (5 мон.)", style);
+        Image balanceCoinImage = new Image(new TextureRegionDrawable(Assets.coinIcon));
+        Image balanceTurretImage = new Image(new TextureRegionDrawable(Assets.turretIcon));
+
+        Table balanceTable = new Table();
+
+        balanceTable.add(balanceCoinImage)
+                .width(34)
+                .height(34)
+                .padRight(10);
+
+        balanceTable.add(coinsLabel)
+                .padRight(35);
+
+        balanceTable.add(balanceTurretImage)
+                .width(38)
+                .height(38)
+                .padRight(10);
+
+        balanceTable.add(turretCountLabel);
+
+        Image priceCoinImage = new Image(new TextureRegionDrawable(Assets.coinIcon));
+        Label priceText = new Label("Цена:", labelStyle);
+        Label priceValue = new Label("5", labelStyle);
+
+        Table priceTable = new Table();
+        priceTable.add(priceText).padRight(10);
+        priceTable.add(priceCoinImage)
+                .width(28)
+                .height(28)
+                .padRight(8);
+        priceTable.add(priceValue);
+
+        TextButton buyTurretButton = new TextButton("КУПИТЬ ТУРЕЛЬ", style);
         buyTurretButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 if (ShopManager.spendCoins(5)) {
                     ShopManager.addTurretsToInventory(1);
-                    updateInfoLabel();
+
+                    messageLabel.setColor(Color.GREEN);
+                    messageLabel.setText("Турель куплена");
+                } else {
+                    messageLabel.setColor(Color.RED);
+                    messageLabel.setText("Недостаточно монет");
                 }
+
+                updateInfoLabel();
             }
         });
 
-        TextButton backButton = new TextButton("НАЗАД", style);
+        ImageButton backButton = new ImageButton(
+                new TextureRegionDrawable(Assets.backArrow)
+        );
+
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -97,16 +151,45 @@ public class ShopScreen implements Screen {
         table.setFillParent(true);
         table.center();
 
-        table.add(infoLabel).padBottom(40).row();
-        table.add(buyTurretButton).width(350).height(70).padBottom(20).row();
-        table.add(backButton).width(350).height(70);
+        table.add(balanceTable)
+                .padBottom(25)
+                .row();
+
+        table.add(priceTable)
+                .padBottom(15)
+                .row();
+
+        table.add(buyTurretButton)
+                .width(380)
+                .height(70)
+                .padBottom(20)
+                .row();
+
+        table.add(messageLabel)
+                .padTop(5)
+                .row();
 
         stage.addActor(table);
+
+        Table backTable = new Table();
+        backTable.setFillParent(true);
+        backTable.top().left();
+
+        backTable.add(backButton)
+                .pad(20)
+                .width(80)
+                .height(80);
+
+        stage.addActor(backTable);
     }
 
     private void updateInfoLabel() {
-        if (infoLabel != null) {
-            infoLabel.setText("Ваши Монеты: " + ShopManager.getCoins() + "  |  В наличии турелей: " + ShopManager.getTurretInventory());
+        if (coinsLabel != null) {
+            coinsLabel.setText(String.valueOf(ShopManager.getCoins()));
+        }
+
+        if (turretCountLabel != null) {
+            turretCountLabel.setText(String.valueOf(ShopManager.getTurretInventory()));
         }
     }
 
