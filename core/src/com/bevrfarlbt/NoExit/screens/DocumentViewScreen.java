@@ -5,6 +5,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
@@ -55,42 +56,85 @@ public class DocumentViewScreen implements Screen {
 
     private void createUI() {
         Table root = new Table();
-
         root.setFillParent(true);
-
         stage.addActor(root);
 
-        Label title = new Label(document.title, skin);
-        Label text = new Label(document.text, skin);
+        Label.LabelStyle titleStyle = new Label.LabelStyle();
+        titleStyle.font = Assets.mainFont;
+        titleStyle.fontColor = new Color(0.22f, 0.12f, 0.05f, 1f);
 
+        Label.LabelStyle textStyle = new Label.LabelStyle();
+        textStyle.font = Assets.mainFont;
+        textStyle.fontColor = new Color(0.18f, 0.10f, 0.05f, 1f);
+
+        Label title = new Label(document.title, titleStyle);
+        title.setWrap(true);
+        title.setAlignment(1);
+
+        Label text = new Label(document.text, textStyle);
         text.setWrap(true);
+        text.setAlignment(0);
 
-        ImageButton back = new ImageButton(
+        Table documentContent = new Table();
+        documentContent.top();
+        documentContent.left();
+
+        documentContent.add(title)
+                .width(1180)
+                .padBottom(0)
+                .center()
+                .row();
+
+        documentContent.add(text)
+                .width(1180)
+                .left()
+                .top()
+                .row();
+
+        ScrollPane.ScrollPaneStyle scrollStyle = new ScrollPane.ScrollPaneStyle();
+        ScrollPane textPane = new ScrollPane(documentContent, scrollStyle);
+        textPane.setFadeScrollBars(false);
+        textPane.setScrollingDisabled(true, false);
+
+        Table paperTable = new Table();
+        paperTable.setBackground(new TextureRegionDrawable(Assets.documentViewBg));
+
+        paperTable.padTop(430);
+        paperTable.padBottom(100);
+        paperTable.padLeft(130);
+        paperTable.padRight(130);
+
+        paperTable.add(textPane)
+                .width(1180)
+                .height(520)
+                .top()
+                .left();
+
+        root.add(paperTable)
+                .width(1650)
+                .height(760)
+                .center();
+
+        ImageButton backButton = new ImageButton(
                 new TextureRegionDrawable(Assets.backArrow)
         );
 
-        back.addListener(new ClickListener() {
+        backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 game.setScreen(new DocumentArchiveScreen(game));
             }
         });
 
-        root.padTop(90);
-
-        root.add(title).padBottom(20).row();
-
-        root.add(text).width(800).padBottom(40).row();
-
         Table backTable = new Table();
         backTable.setFillParent(true);
         backTable.top().left();
         backTable.setTouchable(Touchable.childrenOnly);
 
-        backTable.add(back)
+        backTable.add(backButton)
                 .pad(20)
-                .width(60)
-                .height(60);
+                .width(80)
+                .height(80);
 
         stage.addActor(backTable);
     }

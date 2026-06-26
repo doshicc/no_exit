@@ -35,6 +35,7 @@ public class Assets {
     public static TextureRegion turretIcon;
     public static TextureRegion scrollFound;
     public static TextureRegion scrollLocked;
+    public static TextureRegion documentViewBg;
 
     public static BitmapFont mainFont;
     public static BitmapFont titleFont;
@@ -76,6 +77,7 @@ public class Assets {
         manager.load("ui/turret.png", Texture.class);
         manager.load("ui/scroll_found.png", Texture.class);
         manager.load("ui/scroll_locked.png", Texture.class);
+        manager.load("ui/document_view_bg.png", Texture.class);
 
         manager.load("Screen/MenuBackground.png", Texture.class);
 
@@ -153,6 +155,7 @@ public class Assets {
         turretIcon = new TextureRegion(manager.get("ui/turret.png", Texture.class));
         scrollFound = new TextureRegion(manager.get("ui/scroll_found.png", Texture.class));
         scrollLocked = new TextureRegion(manager.get("ui/scroll_locked.png", Texture.class));
+        documentViewBg = new TextureRegion(manager.get("ui/document_view_bg.png", Texture.class));
 
         menuBackground = manager.get("Screen/MenuBackground.png", Texture.class);
 
