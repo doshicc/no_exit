@@ -11,6 +11,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.badlogic.gdx.graphics.Color;
 
 import com.bevrfarlbt.NoExit.Assets;
 import com.bevrfarlbt.NoExit.MyGdxGame;
@@ -54,33 +55,52 @@ public class DocumentArchiveScreen implements Screen {
 
     private void createUI() {
         Table root = new Table();
-
         root.setFillParent(true);
         stage.addActor(root);
+
         ScrollPane.ScrollPaneStyle scrollStyle = new ScrollPane.ScrollPaneStyle();
 
         Table docsTable = new Table();
-
         docsTable.top();
         docsTable.left();
+        docsTable.pad(20);
+
+        Label.LabelStyle chapterStyle = new Label.LabelStyle();
+        chapterStyle.font = Assets.mainFont;
+        chapterStyle.fontColor = Color.WHITE;
+
+        Label.LabelStyle numberStyle = new Label.LabelStyle();
+        numberStyle.font = Assets.mainFont;
+        numberStyle.fontColor = new Color(0.25f, 0.15f, 0.05f, 1f); // тёмно-коричневый
+
+        Button.ButtonStyle foundScrollStyle = new Button.ButtonStyle();
+        foundScrollStyle.up = new TextureRegionDrawable(Assets.scrollFound);
+        foundScrollStyle.down = new TextureRegionDrawable(Assets.scrollFound);
+
+        Button.ButtonStyle lockedScrollStyle = new Button.ButtonStyle();
+        lockedScrollStyle.up = new TextureRegionDrawable(Assets.scrollLocked);
+        lockedScrollStyle.down = new TextureRegionDrawable(Assets.scrollLocked);
+        lockedScrollStyle.disabled = new TextureRegionDrawable(Assets.scrollLocked);
 
         for (int chapter = 1; chapter <= 5; chapter++) {
-            Label chapterLabel = new Label("Глава "
-                                    + chapter
-                                    + " ("
-                                    + DocumentManager.getCollectedCount(chapter)
-                                    + "/"
-                                    + DocumentManager.getTotalCount(chapter)
-                                    + ")", skin);
+            Label chapterLabel = new Label(
+                    "Глава " + chapter + " ("
+                            + DocumentManager.getCollectedCount(chapter)
+                            + "/"
+                            + DocumentManager.getTotalCount(chapter)
+                            + ")",
+                    chapterStyle
+            );
 
-            docsTable.add(chapterLabel).left().padTop(20).padBottom(10);
+            docsTable.add(chapterLabel).left().padTop(20).padBottom(15).colspan(4);
             docsTable.row();
+
+            Table chapterGrid = new Table();
 
             for (int i = 1; i <= 8; i++) {
                 int docId = (chapter - 1) * 8 + i;
 
                 Document foundDoc = null;
-
                 for (Document doc : DocumentManager.getCollectedDocuments()) {
                     if (doc.id == docId) {
                         foundDoc = doc;
@@ -88,28 +108,54 @@ public class DocumentArchiveScreen implements Screen {
                     }
                 }
 
+                Stack stack = new Stack();
+
                 if (foundDoc != null) {
                     final Document currentDoc = foundDoc;
-                    TextButton btn = new TextButton(currentDoc.title, skin);
-                    btn.addListener(new ClickListener() {
-                                @Override
-                                public void clicked(InputEvent event, float x, float y) {
-                                    game.setScreen(new DocumentViewScreen(game, currentDoc));
-                                }
-                            });
 
-                    docsTable.add(btn).width(500).pad(5);
+                    Button scrollButton = new Button(foundScrollStyle);
+                    scrollButton.addListener(new ClickListener() {
+                        @Override
+                        public void clicked(InputEvent event, float x, float y) {
+                            game.setScreen(new DocumentViewScreen(game, currentDoc));
+                        }
+                    });
+
+                    Label numberLabel = new Label(String.valueOf(i), numberStyle);
+                    numberLabel.setAlignment(1); // center
+
+                    stack.add(scrollButton);
+
+                    Table overlay = new Table();
+                    overlay.setFillParent(true);
+                    overlay.center();
+                    overlay.add(numberLabel);
+                    stack.add(overlay);
 
                 } else {
-                    TextButton btn = new TextButton("???", skin);
-                    btn.setDisabled(true);
-                    docsTable.add(btn).width(500).pad(5);
+                    Button scrollButton = new Button(lockedScrollStyle);
+                    scrollButton.setDisabled(true);
+
+                    stack.add(scrollButton);
                 }
-                docsTable.row();
+
+                chapterGrid.add(stack)
+                        .width(130)
+                        .height(170)
+                        .pad(10);
+
+                if (i % 4 == 0) {
+                    chapterGrid.row();
+                }
             }
+
+            docsTable.add(chapterGrid).left().padBottom(25).colspan(4);
+            docsTable.row();
         }
 
         ScrollPane scrollPane = new ScrollPane(docsTable, scrollStyle);
+        scrollPane.setFadeScrollBars(false);
+        scrollPane.setScrollingDisabled(true, false);
 
         ImageButton backButton = new ImageButton(
                 new TextureRegionDrawable(Assets.backArrow)
@@ -122,7 +168,7 @@ public class DocumentArchiveScreen implements Screen {
             }
         });
 
-        root.padTop(90);
+        root.padTop(100);
         root.add(scrollPane).expand().fill();
 
         Table backTable = new Table();
@@ -132,8 +178,8 @@ public class DocumentArchiveScreen implements Screen {
 
         backTable.add(backButton)
                 .pad(20)
-                .width(60)
-                .height(60);
+                .width(80)
+                .height(80);
 
         stage.addActor(backTable);
     }

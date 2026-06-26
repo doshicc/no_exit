@@ -33,6 +33,8 @@ public class Assets {
     public static TextureRegion backArrow;
     public static TextureRegion coinIcon;
     public static TextureRegion turretIcon;
+    public static TextureRegion scrollFound;
+    public static TextureRegion scrollLocked;
 
     public static BitmapFont mainFont;
     public static BitmapFont titleFont;
@@ -72,6 +74,8 @@ public class Assets {
         manager.load("ui/back_arrow.png", Texture.class);
         manager.load("ui/coin.png", Texture.class);
         manager.load("ui/turret.png", Texture.class);
+        manager.load("ui/scroll_found.png", Texture.class);
+        manager.load("ui/scroll_locked.png", Texture.class);
 
         manager.load("Screen/MenuBackground.png", Texture.class);
 
@@ -147,6 +151,8 @@ public class Assets {
         backArrow = new TextureRegion(manager.get("ui/back_arrow.png", Texture.class));
         coinIcon = new TextureRegion(manager.get("ui/coin.png", Texture.class));
         turretIcon = new TextureRegion(manager.get("ui/turret.png", Texture.class));
+        scrollFound = new TextureRegion(manager.get("ui/scroll_found.png", Texture.class));
+        scrollLocked = new TextureRegion(manager.get("ui/scroll_locked.png", Texture.class));
 
         menuBackground = manager.get("Screen/MenuBackground.png", Texture.class);
 
