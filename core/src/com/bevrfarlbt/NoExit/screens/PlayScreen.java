@@ -20,6 +20,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Touchpad;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Array;
@@ -97,6 +98,7 @@ public class PlayScreen implements Screen {
     private GlyphLayout tutorialLayout;
 
     private Body exitBlocker;
+    private Body entranceBlocker;
     private TextButton turretButton;
 
     public PlayScreen(MyGdxGame game) {
@@ -158,6 +160,9 @@ public class PlayScreen implements Screen {
 
             if (SaveManager.hasExtraLifeSaved()) {
                 player.addExtraLife();
+            }
+            if (roomsClearedCount > 0) {
+                createEntranceBlocker();
             }
         }
 
@@ -349,20 +354,62 @@ public class PlayScreen implements Screen {
 
         documentTable = new Table();
         documentTable.setFillParent(true);
-
         documentTable.setVisible(false);
-
-        documentTable.setBackground(skin.newDrawable("white_pixel", new Color(0,0,0,0.9f)));
-
+        documentTable.setBackground(skin.newDrawable("white_pixel", new Color(0, 0, 0, 0.85f)));
         stageUI.addActor(documentTable);
 
-        documentTitle = new Label("", skin);
-        documentText = new Label("", skin);
+        Label.LabelStyle documentTitleStyle = new Label.LabelStyle();
+        documentTitleStyle.font = Assets.mainFont;
+        documentTitleStyle.fontColor = new Color(0.22f, 0.12f, 0.05f, 1f);
 
+        Label.LabelStyle documentTextStyle = new Label.LabelStyle();
+        documentTextStyle.font = Assets.mainFont;
+        documentTextStyle.fontColor = new Color(0.18f, 0.10f, 0.05f, 1f);
+
+        documentTitle = new Label("", documentTitleStyle);
+        documentTitle.setWrap(true);
+        documentTitle.setAlignment(1);
+
+        documentText = new Label("", documentTextStyle);
         documentText.setWrap(true);
+        documentText.setAlignment(0);
 
-        TextButton closeDocButton =
-                new TextButton("Закрыть", skin);
+        Table documentContent = new Table();
+        documentContent.top();
+        documentContent.left();
+
+        documentContent.add(documentTitle)
+                .width(850)
+                .padBottom(0)
+                .center()
+                .row();
+
+        documentContent.add(documentText)
+                .width(850)
+                .left()
+                .top()
+                .row();
+
+        ScrollPane.ScrollPaneStyle scrollStyle = new ScrollPane.ScrollPaneStyle();
+        ScrollPane documentScrollPane = new ScrollPane(documentContent, scrollStyle);
+        documentScrollPane.setFadeScrollBars(false);
+        documentScrollPane.setScrollingDisabled(true, false);
+
+        Table paperTable = new Table();
+        paperTable.setBackground(new TextureRegionDrawable(Assets.documentViewBg));
+
+        paperTable.padTop(220);
+        paperTable.padBottom(90);
+        paperTable.padLeft(120);
+        paperTable.padRight(120);
+
+        paperTable.add(documentScrollPane)
+                .width(850)
+                .height(230)
+                .top()
+                .left();
+
+        TextButton closeDocButton = new TextButton("Закрыть", skin);
 
         closeDocButton.addListener(new ClickListener() {
             @Override
@@ -374,9 +421,19 @@ public class PlayScreen implements Screen {
             }
         });
 
-        documentTable.add(documentTitle).padBottom(20).row();
-        documentTable.add(documentText).width(700).padBottom(20).row();
-        documentTable.add(closeDocButton).size(220,60);
+        Table popupTable = new Table();
+        popupTable.center();
+
+        popupTable.add(paperTable)
+                .width(1250)
+                .height(560)
+                .row();
+
+        popupTable.add(closeDocButton)
+                .size(220, 60)
+                .padTop(20);
+
+        documentTable.add(popupTable).center();
     }
 
     private void handleInput(float dt) {
@@ -467,6 +524,18 @@ public class PlayScreen implements Screen {
             batch.setColor(1, 1, 1, 1f);
         }
 
+        if (entranceBlocker != null) {
+            batch.setColor(0, 0, 0, 0.8f);
+            batch.draw(
+                    Assets.leftRightWall,
+                    currentRoom.position.x,
+                    roomH / 2 - tileSize,
+                    tileSize,
+                    tileSize * 3
+            );
+            batch.setColor(1, 1, 1, 1f);
+        }
+
         for (Turret t : turrets) t.draw(batch);
         for (EnemyZombie z : zombies) z.draw(batch);
         for (PowerUp p : powerUps) p.draw(batch);
@@ -486,31 +555,62 @@ public class PlayScreen implements Screen {
         stageUI.draw();
     }
 
+    private void drawTextWithShadow(String text, float x, float y, Color color) {
+        Assets.mainFont.setColor(0, 0, 0, 0.9f);
+        Assets.mainFont.draw(batch, text, x + 3f, y - 3f);
+
+        Assets.mainFont.setColor(color);
+        Assets.mainFont.draw(batch, text, x, y);
+
+        Assets.mainFont.setColor(Color.WHITE);
+    }
+
     private void renderUIElements() {
-        float heartSize = 32f, startX = 20f, startY = uiViewport.getWorldHeight() - 52f, gap = 40f;
+        float heartSize = 32f;
+        float startX = 20f;
+        float startY = uiViewport.getWorldHeight() - 52f;
+        float gap = 40f;
+
         for (int i = 0; i < player.getMaxLives(); i++) {
-            batch.draw(i < player.getLives() ? uiFullHeart : uiEmptyHeart, startX + (i * gap), startY, heartSize, heartSize);
+            TextureRegion heart = i < player.getLives() ? uiFullHeart : uiEmptyHeart;
+            batch.draw(heart, startX + (i * gap), startY, heartSize, heartSize);
         }
-        if (player.hasExtraLife()) batch.draw(uiExtraHeart, startX + (3 * gap), startY, heartSize, heartSize);
+
+        if (player.hasExtraLife()) {
+            batch.draw(uiExtraHeart, startX + (3 * gap), startY, heartSize, heartSize);
+        }
 
         float worldCenterX = uiViewport.getWorldWidth() / 2f;
         float worldTopY = uiViewport.getWorldHeight();
 
-        Assets.mainFont.draw(batch, "Комната: " + roomLevel, worldCenterX - 60f, worldTopY - 20f);
+        drawTextWithShadow(
+                "Комната: " + roomLevel,
+                worldCenterX - 60f,
+                worldTopY - 20f,
+                Color.WHITE
+        );
+
         int minutes = (int) (sessionTimeSeconds / 60);
         int seconds = (int) (sessionTimeSeconds % 60);
-        Assets.mainFont.draw(batch, String.format("Время: %02d:%02d", minutes, seconds), worldCenterX - 60f, worldTopY - 45f);
+
+        drawTextWithShadow(
+                String.format("Время: %02d:%02d", minutes, seconds),
+                worldCenterX - 60f,
+                worldTopY - 45f,
+                Color.WHITE
+        );
 
         float coinSize = 30f;
         float coinX = 20f;
         float coinY = startY - 50f;
 
         batch.draw(Assets.coinIcon, coinX, coinY, coinSize, coinSize);
-        Assets.mainFont.draw(
-                batch,
+
+        drawTextWithShadow(
                 String.valueOf(ShopManager.getCoins()),
                 coinX + coinSize + 8f,
-                coinY + 24f
+                coinY + 24f,
+                Color.WHITE
         );
 
         float turretSize = 32f;
@@ -519,22 +619,35 @@ public class PlayScreen implements Screen {
 
         batch.draw(Assets.turretIcon, turretX, turretY, turretSize, turretSize);
 
-        Assets.mainFont.draw(
-                batch,
+        drawTextWithShadow(
                 "[1] " + ShopManager.getTurretInventory(),
                 turretX + turretSize + 8f,
-                turretY + 25f
+                turretY + 25f,
+                Color.WHITE
         );
+
         if (!Settings.tutorialCompleted
                 && TutorialManager.getCurrentStep() == TutorialManager.Step.PLACE_TURRET) {
-            Assets.mainFont.draw(batch, "Нажмите сюда \n для установки турели", uiViewport.getWorldWidth() - 500, 380);
+            drawTextWithShadow(
+                    "Нажмите сюда\nдля установки турели",
+                    uiViewport.getWorldWidth() - 500,
+                    380,
+                    Color.WHITE
+            );
         }
 
         if (!Settings.tutorialCompleted) {
-            tutorialLayout.setText(Assets.mainFont, TutorialManager.getCurrentText());
-            Assets.mainFont.draw(batch, tutorialLayout,
-                    uiViewport.getWorldWidth() - tutorialLayout.width - 40,
-                    uiViewport.getWorldHeight() - 140);
+            String tutorialText = TutorialManager.getCurrentText();
+
+            float tutorialX = uiViewport.getWorldWidth() - 520;
+            float tutorialY = uiViewport.getWorldHeight() - 140;
+
+            drawTextWithShadow(
+                    tutorialText,
+                    tutorialX,
+                    tutorialY,
+                    Color.WHITE
+            );
         }
     }
 
@@ -542,7 +655,10 @@ public class PlayScreen implements Screen {
         if (!isGameOver && !isPaused && !documentOpened) {
             world.step(1 / 60f, 6, 2);
             sessionTimeSeconds += dt;
-            if (oneShotTimer > 0) oneShotTimer -= dt;
+
+            if (oneShotTimer > 0) {
+                oneShotTimer -= dt;
+            }
 
             if (Settings.musicGameEnabled) {
                 if (currentMusic != null && !currentMusic.isPlaying()) {
@@ -555,7 +671,9 @@ public class PlayScreen implements Screen {
                 }
             } else {
                 if (currentMusic != null && currentMusic.isPlaying()) {
-                    try { currentMusic.stop(); } catch (Exception ignored) {}
+                    try {
+                        currentMusic.stop();
+                    } catch (Exception ignored) {}
                 }
             }
 
@@ -567,33 +685,43 @@ public class PlayScreen implements Screen {
             for (int i = turrets.size - 1; i >= 0; i--) {
                 Turret t = turrets.get(i);
                 t.update(dt, zombies);
+
                 if (t.isDestroyed) {
                     turrets.removeIndex(i);
                 }
             }
 
-            for (EnemyZombie z : zombies) z.update(dt, player.body.getPosition(), player, turrets);
+            for (EnemyZombie z : zombies) {
+                z.update(dt, player.body.getPosition(), player, turrets);
+            }
 
             if (player.getLives() <= 0) {
                 SaveManager.deleteSave();
+
                 isGameOver = true;
+
                 if (currentMusic != null) {
-                    try { currentMusic.stop(); } catch (Exception ignored) {}
+                    try {
+                        currentMusic.stop();
+                    } catch (Exception ignored) {}
                 }
+
                 gameOverTable.setVisible(true);
                 moveTouchpad.setVisible(false);
                 aimTouchpad.setVisible(false);
             }
         }
-        if (turretButton != null) {
-            turretButton.setDisabled(ShopManager.getTurretInventory() <= 0);
-        }
 
         if (turretButton != null) {
+            turretButton.setDisabled(ShopManager.getTurretInventory() <= 0);
             turretButton.setText("Турель (" + ShopManager.getTurretInventory() + ")");
         }
 
-        float camX = Math.max(player.body.getPosition().x * B2DVars.PPM, gameViewport.getWorldWidth() / 2f);
+        float camX = Math.max(
+                player.body.getPosition().x * B2DVars.PPM,
+                gameViewport.getWorldWidth() / 2f
+        );
+
         cam.position.lerp(new Vector3(camX, roomH / 2, 0), 0.1f);
         cam.update();
     }
@@ -634,7 +762,7 @@ public class PlayScreen implements Screen {
                         showDocument(epilogue.title, epilogue.text);
                     }
                 } else {
-                    if (MathUtils.randomBoolean(0.30f)) {
+                    if (MathUtils.randomBoolean(0.40f)) {
                         int chapter = DocumentManager.getCurrentChapter();
                         Document doc = DocumentManager.getRandomDocument(chapter);
                         if (doc != null) {
@@ -652,12 +780,25 @@ public class PlayScreen implements Screen {
         }
         if (nextRoom != null && player.body.getPosition().x * B2DVars.PPM > nextRoom.position.x + 64f) {
             cleanupZombies();
+
+            if (entranceBlocker != null) {
+                try {
+                    world.destroyBody(entranceBlocker);
+                } catch (Exception ignored) {}
+                entranceBlocker = null;
+            }
+
             currentRoom.destroy(world);
+
             currentRoom = nextRoom;
             nextRoom = null;
             roomCleared = false;
+
+            createEntranceBlocker();
             createExitBlocker();
+
             turrets.clear();
+            saveProgress();
         }
     }
 
@@ -703,6 +844,26 @@ public class PlayScreen implements Screen {
         float startX = currentRoom.position.x + roomW, endX = nextRoom.position.x;
         currentRoom.bodies.add(bodyFactory.createRect(startX + (endX - startX) / 2, roomH / 2 - tileSize - 5, (endX - startX), 10, true, 0, 0, "wall_low"));
         currentRoom.bodies.add(bodyFactory.createRect(startX + (endX - startX) / 2, roomH / 2 + tileSize * 2 + 5, (endX - startX), 10, true, 0, 0, "wall_up"));
+    }
+
+    private void createEntranceBlocker() {
+        if (entranceBlocker != null) {
+            try {
+                world.destroyBody(entranceBlocker);
+            } catch (Exception ignored) {}
+            entranceBlocker = null;
+        }
+
+        entranceBlocker = bodyFactory.createRect(
+                currentRoom.position.x + tileSize / 2f,
+                roomH / 2f,
+                tileSize,
+                tileSize * 3f,
+                true,
+                0,
+                0,
+                "entrance_blocker"
+        );
     }
 
     private void saveProgress() {
